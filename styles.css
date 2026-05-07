@@ -603,6 +603,110 @@ select:focus-visible,
   gap: 11px;
 }
 
+.traffic-report {
+  display: grid;
+  gap: 12px;
+  animation: resultIn 260ms ease-out;
+}
+
+.traffic-header {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  border: 2px solid var(--traffic-border);
+  border-radius: 24px;
+  background: var(--traffic-bg);
+  padding: 22px 14px;
+  text-align: center;
+  box-shadow: 0 18px 40px var(--traffic-glow);
+}
+
+.traffic-green {
+  --traffic-bg: #ECFDF5;
+  --traffic-border: #86EFAC;
+  --traffic-color: var(--green);
+  --traffic-glow: rgba(22, 163, 74, 0.16);
+}
+
+.traffic-yellow {
+  --traffic-bg: #FFFBEB;
+  --traffic-border: #FDE68A;
+  --traffic-color: var(--yellow);
+  --traffic-glow: rgba(234, 179, 8, 0.18);
+}
+
+.traffic-red {
+  --traffic-bg: #FEF2F2;
+  --traffic-border: #FECACA;
+  --traffic-color: var(--red);
+  --traffic-glow: rgba(220, 38, 38, 0.16);
+}
+
+.traffic-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: var(--traffic-color);
+  font-size: 2.6rem;
+  font-weight: 950;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.traffic-header h2 {
+  margin: 0;
+  color: var(--traffic-color);
+  font-size: clamp(3rem, 17vw, 5.2rem);
+  line-height: 0.9;
+  letter-spacing: 0;
+}
+
+.traffic-header p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.traffic-action {
+  min-width: min(100%, 260px);
+  background: var(--traffic-color);
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+.traffic-action:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.traffic-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--traffic-border);
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: var(--muted);
+  padding: 0 11px;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+@keyframes resultIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .report-meta {
   display: flex;
   flex-wrap: wrap;

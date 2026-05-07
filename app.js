@@ -60,6 +60,7 @@ const HUMAN_REVIEW_PRICE = "$199 UYU";
 const AI_ENABLED = true;
 const AI_ENDPOINT = "https://TU-WORKER.prevenia.workers.dev/analyze";
 const AI_TIMEOUT_MS = 12000;
+const SOUND_ENABLED = false;
 
 const UNLOCK_CODES = [
   { code: "PREVENIA30", checks: 30, label: "Pack 30 verificaciones" },
@@ -521,9 +522,66 @@ async function buildHybridResult(input, localResult) {
   }
 }
 
+function getTrafficLightResult(result) {
+  if (result.score <= 25) {
+    return {
+      level: "green",
+      title: "ABRIR",
+      subtitle: "No detectamos señales fuertes de estafa.",
+      icon: "✓",
+      action: "Abrir enlace"
+    };
+  }
+
+  if (result.score <= 60) {
+    return {
+      level: "yellow",
+      title: "CUIDADO",
+      subtitle: "Hay señales sospechosas. Verificá antes de continuar.",
+      icon: "!",
+      action: "Revisar antes de abrir"
+    };
+  }
+
+  return {
+    level: "red",
+    title: "PELIGRO",
+    subtitle: "Detectamos múltiples señales comunes de estafa.",
+    icon: "!",
+    action: "No abrir"
+  };
+}
+
+function extractFirstUrl(text) {
+  const match = String(text || "").match(/\bhttps?:\/\/[^\s]+|\bwww\.[^\s]+|\b[a-z0-9-]+\.[a-z]{2,}(?:\/[^\s]*)?/i);
+  if (!match) return "";
+  const raw = match[0].replace(/[),.;!?]+$/g, "");
+  return raw.startsWith("http") ? raw : `https://${raw}`;
+}
+
+function playResultSound(level) {
+  if (!SOUND_ENABLED || !window.AudioContext) return;
+
+  const audio = new AudioContext();
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+
+  oscillator.frequency.value = level === "green" ? 660 : level === "yellow" ? 440 : 220;
+  gain.gain.value = 0.04;
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start();
+  oscillator.stop(audio.currentTime + 0.12);
+}
+
 function renderResult(result) {
   const { score, category, confidence, pattern, alerts, signals, explanation, recommendation, analyzedAt, executiveSummary } = result;
   const reviewUrl = buildManualReviewUrl(result);
+  const traffic = getTrafficLightResult(result);
+  const firstUrl = extractFirstUrl(result.input);
+  const visibleAction = traffic.level === "green" && firstUrl
+    ? `<a class="btn traffic-action" href="${escapeHtml(firstUrl)}" target="_blank" rel="noopener">${traffic.action}</a>`
+    : `<button class="btn traffic-action" type="button" disabled>${traffic.action}</button>`;
   const aiApplied = Boolean(result.ai && result.ai.ok);
   const aiStatusText = aiApplied ? "Revisión online aplicada" : "Análisis local";
   const aiFallbackText = result.aiFallbackMessage || "";
@@ -542,36 +600,17 @@ function renderResult(result) {
 
   resultEl.className = "result-card panel";
   resultEl.innerHTML = `
-    <article class="report">
-      <header class="report-header compact-report">
-        <div class="report-meta">
-          <span class="badge risk-${category.level}">${escapeHtml(category.label)}</span>
-          <span class="mini-badge">${score}/100</span>
-          <span class="mini-badge">${escapeHtml(aiStatusText)}</span>
-        </div>
-
-        <div class="score-panel compact-score">
-          <div class="score-orb risk-${category.level}" style="--score: ${score}">
-            <span>${score}</span>
-            <small>/100</small>
-          </div>
-          <div>
-            <h2>Resultado preventivo</h2>
-            <p class="score-label">${escapeHtml(executiveSummary)}</p>
-          </div>
-          <div class="risk-bar" aria-label="Barra de riesgo">
-            <div class="risk-fill fill-${category.level}" style="width: ${score}%"></div>
-          </div>
-        </div>
-
-        <p class="executive-summary">${escapeHtml(executiveSummary)}</p>
-        <p class="primary-recommendation">${escapeHtml(recommendation)}</p>
-        <p class="analysis-disclaimer">Este análisis detecta señales de riesgo. No confirma de forma definitiva si algo es una estafa.</p>
-        ${aiFallbackText ? `<p class="ai-fallback">${escapeHtml(aiFallbackText)}</p>` : ""}
+    <article class="report traffic-report traffic-${traffic.level}">
+      <header class="traffic-header">
+        <div class="traffic-icon" aria-hidden="true">${traffic.icon}</div>
+        <h2>${traffic.title}</h2>
+        <p>${traffic.subtitle}</p>
+        ${visibleAction}
+        <span class="traffic-badge">${escapeHtml(aiStatusText)}</span>
       </header>
 
       <details class="report-details">
-        <summary>Ver informe completo</summary>
+        <summary>Ver detalles</summary>
         <div class="report-grid">
           ${aiDetails}
           <section class="report-box wide">
@@ -589,9 +628,15 @@ function renderResult(result) {
           </section>
 
           <section class="report-box">
-            <h3>Por qué subió el riesgo</h3>
+            <h3>Explicación</h3>
             <p>${escapeHtml(explanation)}</p>
             <p class="mini-note">Confianza: ${escapeHtml(confidence)} · Patrón: ${escapeHtml(pattern)} · ${escapeHtml(analyzedAt)}</p>
+          </section>
+
+          <section class="report-box">
+            <h3>Recomendación</h3>
+            <p>${escapeHtml(recommendation)}</p>
+            <p class="mini-note">Categoría interna: ${escapeHtml(category.label)}</p>
           </section>
 
           <section class="report-box">
@@ -630,6 +675,7 @@ function renderResult(result) {
 
   document.querySelector("#copy-result-btn").addEventListener("click", () => copyResult(result));
   document.querySelector("#share-result-btn").addEventListener("click", () => shareResult(result));
+  playResultSound(traffic.level);
 }
 
 function saveHistory(result) {
@@ -1272,7 +1318,14 @@ analyzeBtn.addEventListener("click", async () => {
 
   if (!input) {
     currentResult = null;
-    renderResult(localResult);
+    resultEl.className = "result-card panel is-empty";
+    resultEl.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">IA</span>
+        <h2>Esperando análisis</h2>
+        <p>Pegá un mensaje, enlace o propuesta sospechosa para recibir una recomendación preventiva.</p>
+      </div>
+    `;
     updateManualReviewLink();
     return;
   }
