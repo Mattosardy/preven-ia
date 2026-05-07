@@ -14,8 +14,13 @@
   <meta property="og:description" content="Detectá señales de estafa antes de confiar.">
   <meta property="og:image" content="./icons/preview.png">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mattosardy.github.io/preven-ia/">
   <meta property="og:locale" content="es_UY">
   <meta property="og:site_name" content="Preven-IA">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Preven-IA - Detector de Estafas">
+  <meta name="twitter:description" content="Detectá señales de estafa antes de confiar.">
+  <meta name="twitter:image" content="./icons/preview.png">
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231E3A8A'/%3E%3Cpath d='M32 9l18 7v13c0 12-7 20-18 25-11-5-18-13-18-25V16l18-7z' fill='%23F8FAFC'/%3E%3Cpath d='M24 31l6 6 12-14' fill='none' stroke='%2322C55E' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
@@ -37,7 +42,7 @@
       <div class="brand-block">
         <div class="uruguay-lines" aria-hidden="true"><span></span><span></span><span></span></div>
         <h1>Preven-IA</h1>
-        <p class="subtitle">Detector preventivo de señales de estafa.</p>
+        <p class="subtitle">Detectá señales de estafa antes de confiar.</p>
       </div>
     </header>
 
@@ -64,12 +69,16 @@
           <button class="btn btn-ghost compact-btn" id="clear-btn" type="button">Limpiar</button>
         </div>
 
+        <p class="main-helper">Pegá un mensaje, enlace o propuesta sospechosa y recibí una orientación preventiva.</p>
+
         <div class="usage-status" aria-live="polite">
           <span>Verificaciones gratis: <strong id="free-checks-count">5</strong></span>
           <span>Verificaciones desbloqueadas: <strong id="premium-checks-count">0</strong></span>
         </div>
 
         <p class="short-legal">No ingreses claves, PIN, códigos SMS ni datos bancarios.</p>
+        <button class="share-site-btn" id="share-site-btn" type="button">Compartir Preven-IA</button>
+        <p id="share-site-message" class="form-message share-message" role="status"></p>
 
         <div class="demo-row hidden-demos" aria-label="Ejemplos precargados">
           <button class="chip" type="button" data-demo="crypto">Crypto</button>

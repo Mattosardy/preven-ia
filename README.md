@@ -92,7 +92,7 @@ El proyecto usa rutas relativas:
 En `app.js`:
 
 ```js
-const WHATSAPP_NUMBER = "59800000000";
+const WHATSAPP_NUMBER = "598XXXXXXXX";
 ```
 
 Usa formato internacional sin `+`, espacios ni guiones. Si lo dejas vacio, la app mostrara que WhatsApp no esta configurado.

@@ -368,6 +368,30 @@ select:focus-visible,
   text-align: center;
 }
 
+.main-helper {
+  margin: 10px 2px 0;
+  color: var(--muted);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.share-site-btn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+  border: 1px solid #BAE6FD;
+  border-radius: 999px;
+  background: #F0F9FF;
+  color: var(--blue);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.share-message {
+  margin-top: 8px;
+  text-align: center;
+}
+
 .usage-status {
   display: grid;
   grid-template-columns: 1fr;

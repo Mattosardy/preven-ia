@@ -38,8 +38,10 @@ const resetUsageBtn = document.querySelector("#reset-usage-btn");
 const sharedCard = document.querySelector("#shared-card");
 const analyzeSharedBtn = document.querySelector("#analyze-shared-btn");
 const androidNotifyBtn = document.querySelector("#android-notify-btn");
+const shareSiteBtn = document.querySelector("#share-site-btn");
+const shareSiteMessage = document.querySelector("#share-site-message");
 
-const WHATSAPP_NUMBER = "59800000000";
+const WHATSAPP_NUMBER = "598XXXXXXXX";
 const BUSINESS_NAME = "Preven-IA";
 const MANUAL_REVIEW_PRICE = "USD 5";
 const COUNTRY = "Uruguay / LATAM";
@@ -523,7 +525,7 @@ function renderResult(result) {
   const { score, category, confidence, pattern, alerts, signals, explanation, recommendation, analyzedAt, executiveSummary } = result;
   const reviewUrl = buildManualReviewUrl(result);
   const aiApplied = Boolean(result.ai && result.ai.ok);
-  const aiStatusText = aiApplied ? "IA online aplicada" : "Análisis local";
+  const aiStatusText = aiApplied ? "Revisión online aplicada" : "Análisis local";
   const aiFallbackText = result.aiFallbackMessage || "";
   const aiDetails = aiApplied ? `
           <section class="report-box wide ai-box">
@@ -620,7 +622,7 @@ function renderResult(result) {
         <div class="result-actions">
           <a class="btn btn-primary" href="${reviewUrl}" target="_blank" rel="noopener">Revisión manual (${MANUAL_REVIEW_PRICE})</a>
           <button class="btn btn-secondary" type="button" id="copy-result-btn">Copiar informe</button>
-          <button class="btn btn-secondary" type="button" id="share-result-btn">Compartir por WhatsApp</button>
+          <button class="btn btn-secondary" type="button" id="share-result-btn">Compartir resultado</button>
         </div>
       </details>
     </article>
@@ -952,8 +954,53 @@ function copyResult(result) {
 }
 
 function shareResult(result) {
-  const message = encodeURIComponent(formatResultText(result));
-  window.open(`https://wa.me/?text=${message}`, "_blank", "noopener");
+  const text = [
+    "Análisis orientativo realizado con Preven-IA.",
+    `Categoría: ${result.category.label}`,
+    `Puntaje: ${result.score}/100`,
+    `Recomendación: ${result.recommendation}`
+  ].join("\n");
+
+  shareOrCopy({
+    title: "Preven-IA",
+    text,
+    url: window.location.href
+  }, "#share-result-btn", "Resultado copiado para compartir.");
+}
+
+function shareSite() {
+  shareOrCopy({
+    title: "Preven-IA",
+    text: "Antes de pagar, abrir un enlace o pasar datos, revisalo con Preven-IA.",
+    url: window.location.href
+  }, null, "Link copiado para compartir.");
+}
+
+async function shareOrCopy(payload, buttonSelector, fallbackMessage) {
+  const textToCopy = `${payload.title}\n${payload.text}\n${payload.url}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share(payload);
+      return;
+    }
+
+    await copyToClipboard(textToCopy);
+    if (buttonSelector) {
+      flashButton(buttonSelector, fallbackMessage);
+    } else if (shareSiteMessage) {
+      shareSiteMessage.textContent = fallbackMessage;
+      shareSiteMessage.className = "form-message success share-message";
+    }
+  } catch {
+    await copyToClipboard(textToCopy);
+    if (buttonSelector) {
+      flashButton(buttonSelector, fallbackMessage);
+    } else if (shareSiteMessage) {
+      shareSiteMessage.textContent = fallbackMessage;
+      shareSiteMessage.className = "form-message success share-message";
+    }
+  }
 }
 
 function formatResultText(result) {
@@ -1009,7 +1056,7 @@ function flashButton(selector, label) {
 }
 
 function buildManualReviewUrl(result = currentResult) {
-  if (!WHATSAPP_NUMBER) return "#";
+  if (!isWhatsAppConfigured()) return "#";
 
   const summary = result && result.input ? createSummary(result.input) : createSummary(inputEl.value || "Todavía no agregué el detalle.");
   const score = result && result.input ? result.score : "sin puntaje";
@@ -1020,7 +1067,7 @@ function buildManualReviewUrl(result = currentResult) {
 }
 
 function buildPaymentConfirmationUrl() {
-  if (!WHATSAPP_NUMBER) return "";
+  if (!isWhatsAppConfigured()) return "";
 
   const summary = currentResult && currentResult.input ? createSummary(currentResult.input) : createSummary(inputEl.value || "A completar");
   const score = currentResult && currentResult.input ? currentResult.score : "sin puntaje";
@@ -1038,7 +1085,7 @@ function buildPaymentConfirmationUrl() {
 }
 
 function buildUnlockPaymentProofUrl() {
-  if (!WHATSAPP_NUMBER) return "";
+  if (!isWhatsAppConfigured()) return "";
 
   const summary = currentResult && currentResult.input ? createSummary(currentResult.input) : createSummary(inputEl.value || "A completar");
   const text = [
@@ -1053,9 +1100,13 @@ function buildUnlockPaymentProofUrl() {
 }
 
 function buildAndroidNotifyUrl() {
-  if (!WHATSAPP_NUMBER) return "";
+  if (!isWhatsAppConfigured()) return "";
   const text = "Hola, quiero que me avisen cuando esté disponible Preven-IA para Android.";
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
+function isWhatsAppConfigured() {
+  return /^\d{8,15}$/.test(WHATSAPP_NUMBER);
 }
 
 function loadSharedTextFromUrl() {
@@ -1321,6 +1372,21 @@ if (androidNotifyBtn) {
     const url = buildAndroidNotifyUrl();
     if (!url) return;
     window.open(url, "_blank", "noopener");
+  });
+}
+
+if (shareSiteBtn) {
+  shareSiteBtn.addEventListener("click", shareSite);
+}
+
+if (manualReviewLink) {
+  manualReviewLink.addEventListener("click", (event) => {
+    if (isWhatsAppConfigured()) return;
+    event.preventDefault();
+    if (paymentMessage) {
+      paymentMessage.textContent = "WhatsApp no configurado todavía.";
+      paymentMessage.className = "form-message error";
+    }
   });
 }
 
