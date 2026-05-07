@@ -466,6 +466,16 @@ select:focus-visible,
   border-color: #BFDBFE;
 }
 
+.install-card .btn {
+  min-width: 170px;
+}
+
+.install-card .btn:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
 .shared-card,
 .android-card {
   display: grid;

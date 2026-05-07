@@ -72,7 +72,7 @@ const CASES_KEY = "nocaigas-pending-cases-v1";
 const USAGE_STORAGE_KEY = "prevenia_usage_v1";
 
 let currentResult = null;
-let deferredInstallPrompt = null;
+let deferredPrompt = null;
 let lastPaymentMethod = "";
 
 const demos = {
@@ -1228,6 +1228,7 @@ function setupInstallPrompt() {
 
   if (window.matchMedia("(display-mode: standalone)").matches) {
     installCard.hidden = true;
+    installBtn.hidden = true;
     return;
   }
 
@@ -1238,24 +1239,29 @@ function setupInstallPrompt() {
   }
 
   window.addEventListener("beforeinstallprompt", (event) => {
+    // Keep the browser prompt for our explicit, user-triggered install button.
     event.preventDefault();
-    deferredInstallPrompt = event;
+    deferredPrompt = event;
     installCard.hidden = false;
     installBtn.hidden = false;
     installCopy.textContent = "Agregala a la pantalla principal para usarla como app.";
   });
 
   installBtn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
+    if (!deferredPrompt) return;
 
-    deferredInstallPrompt.prompt();
-    await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
+    installBtn.disabled = true;
+    await deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.disabled = false;
+    installBtn.hidden = true;
     installCard.hidden = true;
   });
 
   window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
+    deferredPrompt = null;
+    installBtn.hidden = true;
     installCard.hidden = true;
   });
 }
