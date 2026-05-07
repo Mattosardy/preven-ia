@@ -1,0 +1,12 @@
+name = "prevenia-ai-worker"
+main = "worker.js"
+compatibility_date = "2026-05-07"
+
+[vars]
+ALLOWED_ORIGIN = "https://USUARIO.github.io"
+# Optional:
+# MODEL = "openai/gpt-4o-mini"
+
+# Do not put OPENROUTER_API_KEY here.
+# Configure it with:
+# wrangler secret put OPENROUTER_API_KEY

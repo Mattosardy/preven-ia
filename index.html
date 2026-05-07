@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es-UY">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preven-IA - Detector de Estafas</title>
+  <meta name="description" content="Detectá señales de estafa antes de confiar.">
+  <meta name="theme-color" content="#2563EB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Preven-IA">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <meta property="og:title" content="Preven-IA - Detector de Estafas">
+  <meta property="og:description" content="Detectá señales de estafa antes de confiar.">
+  <meta property="og:image" content="./icons/preview.png">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_UY">
+  <meta property="og:site_name" content="Preven-IA">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231E3A8A'/%3E%3Cpath d='M32 9l18 7v13c0 12-7 20-18 25-11-5-18-13-18-25V16l18-7z' fill='%23F8FAFC'/%3E%3Cpath d='M24 31l6 6 12-14' fill='none' stroke='%2322C55E' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient-lines" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="site-header compact">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" role="img">
+          <path d="M32 6l20 8v15c0 13-8 23-20 29C20 52 12 42 12 29V14l20-8z"></path>
+          <path d="M24 32l6 6 12-15"></path>
+        </svg>
+      </div>
+
+      <div class="brand-block">
+        <div class="uruguay-lines" aria-hidden="true"><span></span><span></span><span></span></div>
+        <h1>Preven-IA</h1>
+        <p class="subtitle">Detectá señales de estafa antes de confiar.</p>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="scanner-card panel" aria-labelledby="scanner-title">
+        <h2 id="scanner-title" class="sr-only">Analizador de riesgo</h2>
+
+        <label class="input-label" for="suspicious-input">Mensaje, enlace, wallet o propuesta</label>
+        <div class="textarea-shell">
+          <span class="textarea-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6l7-3z"></path><path d="M9 12l2 2 4-5"></path></svg>
+          </span>
+          <textarea
+            id="suspicious-input"
+            rows="7"
+            spellcheck="false"
+            placeholder="Pegá acá el mensaje, enlace, wallet o propuesta sospechosa..."
+          ></textarea>
+        </div>
+
+        <div class="actions primary-actions">
+          <button class="btn btn-primary" id="analyze-btn" type="button">Analizar</button>
+          <button class="btn btn-secondary compact-btn" id="load-example-btn" type="button">Ejemplo</button>
+          <button class="btn btn-ghost compact-btn" id="clear-btn" type="button">Limpiar</button>
+        </div>
+
+        <div class="usage-status" aria-live="polite">
+          <span>Verificaciones gratis: <strong id="free-checks-count">5</strong></span>
+          <span>Verificaciones desbloqueadas: <strong id="premium-checks-count">0</strong></span>
+        </div>
+
+        <p class="short-legal">No ingreses claves, PIN, códigos SMS ni datos bancarios.</p>
+
+        <div class="demo-row hidden-demos" aria-label="Ejemplos precargados">
+          <button class="chip" type="button" data-demo="crypto">Crypto</button>
+          <button class="chip" type="button" data-demo="bank">Banco</button>
+          <button class="chip" type="button" data-demo="normal">Normal</button>
+        </div>
+      </section>
+
+      <section class="result-card panel is-empty" id="result" aria-live="polite">
+        <div class="empty-state">
+          <span class="empty-icon">IA</span>
+          <h2>Esperando análisis</h2>
+          <p>El resultado aparecerá acá con categoría, puntaje y recomendación preventiva.</p>
+        </div>
+      </section>
+
+      <section class="limit-card panel" id="limit-card" hidden>
+        <div>
+          <h2>Te quedaste sin verificaciones gratuitas</h2>
+          <p>Podés esperar 24 horas o desbloquear más verificaciones.</p>
+        </div>
+        <div class="limit-actions">
+          <button class="btn btn-primary" id="show-payment-methods-btn" type="button">Desbloquear verificaciones</button>
+          <button class="btn btn-secondary" id="send-payment-proof-btn" type="button">Ya pagué, enviar comprobante</button>
+          <button class="btn btn-ghost" id="show-unlock-code-btn" type="button">Ingresar código de desbloqueo</button>
+        </div>
+        <div class="unlock-box" id="unlock-box" hidden>
+          <label class="input-label" for="unlock-code-input">Código de desbloqueo</label>
+          <div class="unlock-row">
+            <input id="unlock-code-input" type="text" autocomplete="off" placeholder="Ej: PREVENIA30">
+            <button class="btn btn-primary" id="apply-unlock-code-btn" type="button">Aplicar</button>
+          </div>
+          <p id="unlock-message" class="form-message" role="status"></p>
+        </div>
+      </section>
+
+      <section class="install-card panel" id="install-card" hidden>
+        <div>
+          <h2>Instalar Preven-IA</h2>
+          <p id="install-copy">Agregala a la pantalla principal para usarla como app.</p>
+        </div>
+        <button class="btn btn-primary" id="install-btn" type="button" hidden>Instalar</button>
+      </section>
+
+      <details class="accordion panel">
+        <summary><span class="summary-icon">?</span><span>Cómo funciona</span></summary>
+        <div class="accordion-content">
+          <ol class="step-list">
+            <li><strong>Pegás</strong> el mensaje, enlace, perfil o wallet sospechosa.</li>
+            <li><strong>Detectamos</strong> señales de riesgo de phishing, crypto scam o inversión falsa.</li>
+            <li><strong>Decidís</strong> si necesitás una revisión manual antes de avanzar.</li>
+          </ol>
+        </div>
+      </details>
+
+      <details class="accordion panel">
+        <summary><span class="summary-icon">!</span><span>Consejos</span></summary>
+        <div class="accordion-content">
+          <ul class="safety-checklist">
+            <li>Verificá si el dominio es oficial.</li>
+            <li>No pagues para liberar premios, retiros o supuestas ganancias.</li>
+            <li>No compartas contraseñas, PIN, código SMS, frase semilla ni CVV.</li>
+            <li>No permitas acceso remoto a tu PC o celular.</li>
+            <li>Contactá a la empresa por canales oficiales.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="accordion panel" id="manual-review-section">
+        <summary><span class="summary-icon">$</span><span>Revisión manual</span></summary>
+        <div class="accordion-content">
+          <div class="cta-inline">
+            <div>
+              <h2>Revisión humana</h2>
+              <p>Si el caso es importante o vas a mover dinero, podés pedir una revisión manual.</p>
+            </div>
+            <a class="btn btn-primary" id="manual-review-link" href="#" target="_blank" rel="noopener">Solicitar revisión</a>
+          </div>
+
+          <div class="payment-center" aria-labelledby="payment-title">
+            <div class="payment-head">
+              <h3 id="payment-title">Elegí una opción</h3>
+              <div class="price-row" aria-label="Precios de revisión">
+                <span>Revisión básica: <strong>$99 UYU</strong></span>
+                <span>Urgente: <strong>$199 UYU</strong></span>
+              </div>
+            </div>
+
+            <div class="payment-grid">
+              <article class="payment-card">
+                <div>
+                  <h3>Transferencia Prex</h3>
+                  <p>Titular: <strong>Matias Arballo</strong></p>
+                  <p>Número: <strong>33909</strong></p>
+                </div>
+                <button class="btn btn-secondary" id="copy-prex-btn" type="button">Copiar datos Prex</button>
+              </article>
+
+              <article class="payment-card">
+                <div>
+                  <h3>PayPal</h3>
+                  <p><strong>matiast3@gmail.com</strong></p>
+                </div>
+                <div class="payment-actions">
+                  <button class="btn btn-secondary" id="open-paypal-btn" type="button">Abrir PayPal</button>
+                  <button class="btn btn-ghost" id="copy-paypal-btn" type="button">Copiar email PayPal</button>
+                </div>
+              </article>
+
+              <article class="payment-card">
+                <div>
+                  <h3>Bitcoin / BlueWallet</h3>
+                  <p>Podés pagar con BTC si ya usás una wallet.</p>
+                </div>
+                <div class="payment-actions">
+                  <button class="btn btn-secondary" id="copy-btc-btn" type="button">Copiar dirección BTC</button>
+                  <button class="btn btn-ghost" id="toggle-btc-btn" type="button" aria-expanded="false">Ver dirección</button>
+                </div>
+                <div class="btc-wallet-box" id="btc-wallet-box" hidden>
+                  <code>bc1q3scj8nh5ta300slstnjxn903wdt5d48wr0qqt5</code>
+                  <div class="qr-placeholder">QR Bitcoin próximamente</div>
+                </div>
+              </article>
+            </div>
+
+            <p class="trust-note">Preven-IA no solicita claves, PIN, códigos SMS, CVV ni frases semilla.</p>
+            <button class="btn btn-primary payment-done-btn" id="payment-done-btn" type="button">Ya realicé el pago</button>
+            <p id="payment-message" class="form-message" role="status"></p>
+          </div>
+
+          <form id="case-form" class="case-form">
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="case-name">Nombre o alias</label>
+                <input id="case-name" name="name" type="text" autocomplete="name" placeholder="Ej: Martín">
+              </div>
+
+              <div class="form-field">
+                <label for="case-contact">Email o WhatsApp</label>
+                <input id="case-contact" name="contact" type="text" autocomplete="email" placeholder="Ej: +598... o email">
+              </div>
+
+              <div class="form-field">
+                <label for="case-type">Tipo de caso</label>
+                <select id="case-type" name="type">
+                  <option value="">Seleccionar</option>
+                  <option>Web sospechosa</option>
+                  <option>Inversión crypto</option>
+                  <option>Phishing bancario</option>
+                  <option>Sorteo/premio</option>
+                  <option>Compra online</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="case-detail">Detalle adicional</label>
+              <textarea id="case-detail" name="detail" rows="3" placeholder="Contá el contexto sin incluir datos sensibles."></textarea>
+            </div>
+
+            <label class="consent-row">
+              <input id="case-consent" name="consent" type="checkbox">
+              <span>Acepto que el análisis es orientativo y no compartí claves ni datos sensibles.</span>
+            </label>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Guardar caso</button>
+              <p id="case-form-message" class="form-message" role="status"></p>
+            </div>
+          </form>
+        </div>
+      </details>
+
+      <details class="accordion panel">
+        <summary><span class="summary-icon">↺</span><span>Historial</span></summary>
+        <div class="accordion-content">
+          <div class="section-heading slim">
+            <p>Se guarda solo fecha, puntaje, categoría y resumen corto.</p>
+            <button class="btn btn-ghost compact-btn" id="clear-history-btn" type="button">Borrar</button>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </div>
+      </details>
+
+      <details class="accordion panel telecom-accordion">
+        <summary><span class="summary-icon">↗</span><span>Telecom T3</span></summary>
+        <div class="accordion-content">
+          <a class="telecom-link" href="https://mattosardy.github.io/telecomt3-card/" target="_blank" rel="noopener">
+            <span>Desarrollado por Telecom T3</span>
+            <small>Soluciones en conectividad y desarrollo digital</small>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M9 7h8v8"></path></svg>
+          </a>
+        </div>
+      </details>
+    </main>
+
+    <section class="admin-panel panel" id="admin-panel" hidden aria-labelledby="admin-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Admin local</p>
+          <h2 id="admin-title">Casos pendientes</h2>
+          <p>Panel sin backend. Los casos viven en el localStorage de este navegador.</p>
+        </div>
+        <button class="btn btn-secondary" id="export-cases-btn" type="button">Exportar JSON</button>
+      </div>
+      <div id="admin-cases-list" class="admin-cases-list"></div>
+    </section>
+
+    <footer class="legal-note">
+      <p>Preven-IA no reemplaza asesoramiento profesional. Si ya transferiste dinero o compartiste datos, contactá a tu banco o proveedor inmediatamente.</p>
+      <div class="footer-actions">
+        <a class="telecom-compact" href="https://mattosardy.github.io/telecomt3-card/" target="_blank" rel="noopener">Desarrollado por Telecom T3 ↗</a>
+        <button class="admin-link" id="reset-usage-btn" type="button">Restablecer pruebas</button>
+        <button class="admin-link" id="admin-btn" type="button">Admin</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
