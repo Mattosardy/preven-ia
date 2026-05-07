@@ -25,6 +25,40 @@ const AI_ENDPOINT = "https://TU-WORKER.prevenia.workers.dev/analyze";
 
 Tambien podes abrir `index.html` directo, pero PWA/service worker funcionan mejor desde Live Server o una URL publicada.
 
+## Modos del proyecto
+
+### Modo web / PWA
+
+- Sigue funcionando en GitHub Pages.
+- Es mobile-first.
+- Funciona offline con analisis local por reglas.
+- Puede usar IA online mediante Worker si esta configurado.
+- No incluye API keys en el frontend.
+
+### Modo Android futuro
+
+La carpeta `android-plan/` prepara una futura app Android basada en compartir texto o links con Preven-IA.
+
+La v1 propuesta:
+
+- Recibe texto desde el menu Compartir de Android.
+- Analiza con motor local y opcionalmente IA online.
+- No lee mensajes automaticamente.
+- No accede directamente a WhatsApp ni otras apps.
+- No usa overlay.
+- No usa accessibility service.
+- No pide permisos invasivos.
+
+## Simular texto compartido en la web
+
+Para probar el futuro flujo Android desde la web:
+
+```text
+index.html?sharedText=https%3A%2F%2Fejemplo.com
+```
+
+La app carga el texto en el campo, muestra el aviso "Texto recibido para analizar" y espera confirmacion del usuario. No analiza automaticamente.
+
 ## Como subir a GitHub Pages
 
 1. Crea un repositorio, por ejemplo `preven-ia`.
@@ -153,3 +187,13 @@ La app funciona offline despues de cargar una vez.
 - Los codigos locales no son seguridad real.
 - El analisis es preventivo y orientativo.
 - Para cobros y control real se recomienda backend.
+
+## Documentacion Android
+
+- `android-plan/README-ANDROID.md`
+- `android-plan/PLAYSTORE-CHECKLIST.md`
+- `android-plan/PRIVACY-DRAFT.md`
+- `android-plan/TERMS-DRAFT.md`
+- `android-plan/app-flow.md`
+- `android-plan/share-target-flow.md`
+- `android-plan/android-manifest-example.xml`

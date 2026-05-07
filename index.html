@@ -37,7 +37,7 @@
       <div class="brand-block">
         <div class="uruguay-lines" aria-hidden="true"><span></span><span></span><span></span></div>
         <h1>Preven-IA</h1>
-        <p class="subtitle">Detectá señales de estafa antes de confiar.</p>
+        <p class="subtitle">Detector preventivo de señales de estafa.</p>
       </div>
     </header>
 
@@ -78,6 +78,14 @@
         </div>
       </section>
 
+      <section class="shared-card panel" id="shared-card" hidden>
+        <div>
+          <h2>Texto recibido para analizar</h2>
+          <p>Revisá el contenido y tocá analizar cuando quieras continuar.</p>
+        </div>
+        <button class="btn btn-primary" id="analyze-shared-btn" type="button">Analizar texto recibido</button>
+      </section>
+
       <section class="result-card panel is-empty" id="result" aria-live="polite">
         <div class="empty-state">
           <span class="empty-icon">IA</span>
@@ -115,13 +123,26 @@
       </section>
 
       <details class="accordion panel">
-        <summary><span class="summary-icon">?</span><span>Cómo funciona</span></summary>
+        <summary><span class="summary-icon">?</span><span>Cómo usar Preven-IA</span></summary>
         <div class="accordion-content">
           <ol class="step-list">
-            <li><strong>Pegás</strong> el mensaje, enlace, perfil o wallet sospechosa.</li>
-            <li><strong>Detectamos</strong> señales de riesgo de phishing, crypto scam o inversión falsa.</li>
-            <li><strong>Decidís</strong> si necesitás una revisión manual antes de avanzar.</li>
+            <li><strong>Copiá o compartí</strong> un mensaje sospechoso.</li>
+            <li><strong>Preven-IA analiza</strong> señales de riesgo.</li>
+            <li><strong>Decidí</strong> si abrir, consultar o pedir revisión humana.</li>
           </ol>
+        </div>
+      </details>
+
+      <details class="accordion panel android-accordion">
+        <summary><span class="summary-icon">A</span><span>Próximamente en Android</span></summary>
+        <div class="accordion-content">
+          <div class="android-card">
+            <p>Vas a poder compartir un enlace sospechoso directamente con Preven-IA antes de abrirlo.</p>
+            <div class="android-actions">
+              <a class="btn btn-secondary" href="./android-plan/README-ANDROID.md">Ver cómo funcionará</a>
+              <button class="btn btn-primary" id="android-notify-btn" type="button">Pedir aviso de lanzamiento</button>
+            </div>
+          </div>
         </div>
       </details>
 

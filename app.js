@@ -35,6 +35,9 @@ const unlockCodeInput = document.querySelector("#unlock-code-input");
 const applyUnlockCodeBtn = document.querySelector("#apply-unlock-code-btn");
 const unlockMessage = document.querySelector("#unlock-message");
 const resetUsageBtn = document.querySelector("#reset-usage-btn");
+const sharedCard = document.querySelector("#shared-card");
+const analyzeSharedBtn = document.querySelector("#analyze-shared-btn");
+const androidNotifyBtn = document.querySelector("#android-notify-btn");
 
 const WHATSAPP_NUMBER = "59800000000";
 const BUSINESS_NAME = "Preven-IA";
@@ -1049,6 +1052,26 @@ function buildUnlockPaymentProofUrl() {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
+function buildAndroidNotifyUrl() {
+  if (!WHATSAPP_NUMBER) return "";
+  const text = "Hola, quiero que me avisen cuando esté disponible Preven-IA para Android.";
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+}
+
+function loadSharedTextFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedText = params.get("sharedText");
+  if (!sharedText) return;
+
+  inputEl.value = sharedText.slice(0, 4000);
+  updateManualReviewLink();
+
+  if (sharedCard) {
+    sharedCard.hidden = false;
+    sharedCard.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
 function showPaymentMessage(message) {
   if (!paymentMessage) return;
   paymentMessage.textContent = message;
@@ -1287,6 +1310,20 @@ if (resetUsageBtn) {
   });
 }
 
+if (analyzeSharedBtn) {
+  analyzeSharedBtn.addEventListener("click", () => {
+    analyzeBtn.click();
+  });
+}
+
+if (androidNotifyBtn) {
+  androidNotifyBtn.addEventListener("click", () => {
+    const url = buildAndroidNotifyUrl();
+    if (!url) return;
+    window.open(url, "_blank", "noopener");
+  });
+}
+
 adminCasesList.addEventListener("click", (event) => {
   const reviewId = event.target.dataset.review;
   const deleteId = event.target.dataset.delete;
@@ -1300,4 +1337,5 @@ recoverFreeChecksIfNeeded();
 setupPaymentCenter();
 setupInstallPrompt();
 registerServiceWorker();
+loadSharedTextFromUrl();
 renderHistory();

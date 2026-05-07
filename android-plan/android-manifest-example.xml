@@ -1,0 +1,11 @@
+<!--
+  Ejemplo solamente.
+  La implementacion real se hara en Android Studio/Kotlin o Capacitor mas adelante.
+-->
+<activity android:name=".ShareReceiverActivity" android:exported="true">
+    <intent-filter>
+        <action android:name="android.intent.action.SEND" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:mimeType="text/plain" />
+    </intent-filter>
+</activity>

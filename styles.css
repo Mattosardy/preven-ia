@@ -442,6 +442,43 @@ select:focus-visible,
   border-color: #BFDBFE;
 }
 
+.shared-card,
+.android-card {
+  display: grid;
+  gap: 10px;
+  background: #EFF6FF;
+}
+
+.shared-card {
+  padding: 14px;
+  border-color: #BFDBFE;
+}
+
+.shared-card[hidden] {
+  display: none;
+}
+
+.shared-card h2,
+.android-card p {
+  margin-bottom: 0;
+}
+
+.shared-card p,
+.android-card p {
+  color: var(--muted);
+}
+
+.android-card {
+  border: 1px solid #BFDBFE;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.android-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .limit-card {
   display: grid;
   gap: 12px;
@@ -1190,10 +1227,15 @@ select:focus-visible,
   }
 
   .cta-inline,
+  .shared-card,
   .install-card,
   .legal-note {
     grid-template-columns: 1fr auto;
     align-items: center;
+  }
+
+  .android-actions {
+    grid-template-columns: 1fr 1fr;
   }
 
   .footer-actions {

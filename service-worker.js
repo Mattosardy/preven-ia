@@ -1,4 +1,4 @@
-const CACHE_NAME = "prevenia-cache-v5";
+const CACHE_NAME = "prevenia-cache-v6";
 
 const APP_ASSETS = [
   "./",
