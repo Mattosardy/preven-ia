@@ -182,6 +182,13 @@ h3 {
   font-weight: 600;
 }
 
+.subtitle-note {
+  margin: 4px 0 0;
+  color: var(--blue);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
 .main-layout {
   display: grid;
   gap: 12px;
