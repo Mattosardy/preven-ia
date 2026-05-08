@@ -1,4 +1,4 @@
-const CACHE_NAME = "prevenia-cache-v13";
+const CACHE_NAME = "prevenia-cache-v20";
 
 const APP_ASSETS = [
   "./",
@@ -9,7 +9,11 @@ const APP_ASSETS = [
   "./service-worker.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/preview.png"
+  "./icons/preview.png",
+  "./icons/link-whatsapp.png",
+  "./icons/link-compartir.png",
+  "./assets/tutoriales/copiar-link.png",
+  "./assets/tutoriales/compartir-prevenia.png"
 ];
 
 self.addEventListener("install", (event) => {

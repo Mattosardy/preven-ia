@@ -176,7 +176,6 @@ La app funciona offline despues de cargar una vez.
 - Probar input vacio.
 - Probar fallback local con `AI_ENABLED = false`.
 - Probar con endpoint IA real cuando el Worker este desplegado.
-- Probar solicitud de revision manual por WhatsApp.
 - Probar copiar informe y compartir por WhatsApp.
 - Probar PWA instalada.
 - Probar offline despues de cargar una vez.

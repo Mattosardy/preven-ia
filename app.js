@@ -27,10 +27,19 @@ const analyzeSharedBtn = document.querySelector("#analyze-shared-btn");
 const androidNotifyBtn = document.querySelector("#android-notify-btn");
 const shareSiteBtn = document.querySelector("#share-site-btn");
 const shareSiteMessage = document.querySelector("#share-site-message");
+const openWhatsappGuideBtn = document.querySelector("#open-whatsapp-guide-btn");
+const openShareGuideBtn = document.querySelector("#open-share-guide-btn");
+const whatsappGuideModal = document.querySelector("#whatsapp-guide-modal");
+const whatsappGuideTitle = document.querySelector("#whatsapp-guide-title");
+const guideImage = document.querySelector("#guide-image");
+const guideImageLink = document.querySelector("#guide-image-link");
+const guideImagePlaceholder = document.querySelector("#guide-image-placeholder");
+const guideHelpText = document.querySelector("#guide-help-text");
+const closeWhatsappGuideBtn = document.querySelector("#close-whatsapp-guide-btn");
+const understoodWhatsappGuideBtn = document.querySelector("#understood-whatsapp-guide-btn");
 
 const WHATSAPP_NUMBER = "598XXXXXXXX";
 const BUSINESS_NAME = "Preven-IA";
-const MANUAL_REVIEW_LABEL = "gratis por ahora";
 const COUNTRY = "Uruguay / LATAM";
 const CONTACT_EMAIL = "contacto@preven-ia.com";
 const ADMIN_PIN = "1234";
@@ -87,7 +96,7 @@ function calculateCategory(score) {
     return {
       label: "Alto riesgo",
       level: "high",
-      recommendation: "Evitá enviar dinero o datos. Guardá evidencia y pedí revisión manual antes de seguir."
+      recommendation: "Evitá enviar dinero o datos. Guardá evidencia y consultá con una persona de confianza antes de seguir."
     };
   }
 
@@ -554,7 +563,7 @@ function buildShouldDo(score, pattern) {
   const actions = [
     "Guardá capturas, enlaces, usuario, wallet o número de teléfono como evidencia.",
     "Verificá la identidad por una app oficial, web oficial o teléfono publicado por la empresa.",
-    "Pedí revisión manual antes de transferir dinero, invertir en crypto o entregar datos."
+    "Consultá con una persona de confianza antes de transferir dinero, invertir en crypto o entregar datos."
   ];
 
   if (pattern === "Crypto scam") {
@@ -657,8 +666,8 @@ function getTrafficLightResult(result) {
     return {
       level: "green",
       title: "ABRIR",
-      subtitle: "No encontramos señales fuertes de estafa.",
-      icon: "OK"
+      subtitle: "No detectamos señales fuertes de estafa.",
+      icon: "✓"
     };
   }
 
@@ -666,7 +675,7 @@ function getTrafficLightResult(result) {
     return {
       level: "yellow",
       title: "CUIDADO",
-      subtitle: "Hay señales raras. Verificá antes de tocar enlaces, pagar o responder.",
+      subtitle: "Hay señales sospechosas. Verificá antes de continuar.",
       icon: "!"
     };
   }
@@ -674,8 +683,8 @@ function getTrafficLightResult(result) {
   return {
     level: "red",
     title: "PELIGRO",
-    subtitle: "Puede ser una estafa. No abras enlaces, no pagues y no compartas datos.",
-    icon: "!!"
+    subtitle: "Detectamos múltiples señales comunes de estafa.",
+    icon: "✕"
   };
 }
 
@@ -724,7 +733,6 @@ function scheduleResultAutoReset() {
 
 function renderResult(result) {
   const { score, category, confidence, pattern, alerts, signals, explanation, recommendation, analyzedAt, executiveSummary } = result;
-  const reviewUrl = buildManualReviewUrl(result);
   const traffic = getTrafficLightResult(result);
   const aiApplied = Boolean(result.ai && result.ai.ok);
   const aiStatusText = aiApplied ? "Revisión online aplicada" : "Análisis local";
@@ -814,7 +822,6 @@ function renderResult(result) {
         </div>
 
         <div class="result-actions">
-          <a class="btn btn-primary" href="${reviewUrl}" target="_blank" rel="noopener">Revisión manual gratis</a>
           <button class="btn btn-secondary" type="button" id="copy-result-btn">Copiar informe</button>
           <button class="btn btn-secondary" type="button" id="share-result-btn">Compartir resultado</button>
         </div>
@@ -1003,6 +1010,7 @@ function containsSensitiveTerms(text) {
 }
 
 function showCaseMessage(message, type) {
+  if (!caseFormMessage) return;
   caseFormMessage.textContent = message;
   caseFormMessage.className = `form-message ${type}`;
 }
@@ -1093,7 +1101,7 @@ function shareResult(result) {
 function shareSite() {
   shareOrCopy({
     title: "Preven-IA",
-    text: "Antes de pagar, abrir un enlace o pasar datos, revisalo con Preven-IA.",
+    text: "Prevenir una estafa solo tarda 1 minuto. Probá Preven-IA antes de abrir enlaces o pasar datos.",
     url: window.location.href
   }, null, "Link copiado para compartir.");
 }
@@ -1137,7 +1145,6 @@ function formatResultText(result) {
     `Resumen: ${result.executiveSummary}`,
     `Alertas principales: ${result.alerts.slice(0, 5).join(" | ")}`,
     `Recomendación: ${result.recommendation}`,
-    `Revisión manual: ${MANUAL_REVIEW_LABEL}`,
     `Contacto: ${CONTACT_EMAIL}`,
     "Aviso: este análisis es orientativo y no reemplaza una investigación profesional."
   ];
@@ -1219,7 +1226,49 @@ function showManualReviewMessage(message, type = "success") {
 }
 
 function updateManualReviewLink() {
+  if (!manualReviewLink) return;
   manualReviewLink.href = buildManualReviewUrl(currentResult);
+}
+
+function openGuideModal({ title, imageSrc, imageAlt, helpText }) {
+  if (!whatsappGuideModal) return;
+  if (whatsappGuideTitle) whatsappGuideTitle.textContent = title;
+  if (guideImage) {
+    guideImage.hidden = false;
+    guideImage.src = imageSrc;
+    guideImage.alt = imageAlt;
+  }
+  if (guideImageLink) guideImageLink.href = imageSrc;
+  if (guideImagePlaceholder) guideImagePlaceholder.hidden = true;
+  if (guideHelpText) guideHelpText.textContent = helpText;
+  whatsappGuideModal.hidden = false;
+  document.body.classList.add("modal-open");
+  if (understoodWhatsappGuideBtn) understoodWhatsappGuideBtn.focus();
+}
+
+function openWhatsappGuide() {
+  openGuideModal({
+    title: "Cómo copiar un link en WhatsApp",
+    imageSrc: "./assets/tutoriales/copiar-link.png",
+    imageAlt: "Guía visual para copiar un link en WhatsApp y pegarlo en Preven-IA",
+    helpText: "Si no podés copiarlo, pedile ayuda a un familiar de confianza."
+  });
+}
+
+function openShareGuide() {
+  openGuideModal({
+    title: "Cómo compartir Preven-IA por WhatsApp",
+    imageSrc: "./assets/tutoriales/compartir-prevenia.png",
+    imageAlt: "Guía visual para compartir Preven-IA por WhatsApp",
+    helpText: "Compartir Preven-IA puede ayudar a otra persona a revisar un mensaje antes de confiar."
+  });
+}
+
+function closeWhatsappGuide() {
+  if (!whatsappGuideModal) return;
+  whatsappGuideModal.hidden = true;
+  document.body.classList.remove("modal-open");
+  if (openWhatsappGuideBtn) openWhatsappGuideBtn.focus();
 }
 
 function formatDateTime(date) {
@@ -1319,18 +1368,24 @@ analyzeBtn.addEventListener("click", async () => {
   updateManualReviewLink();
 });
 
-clearBtn.addEventListener("click", clearForm);
+if (clearBtn) {
+  clearBtn.addEventListener("click", clearForm);
+}
 
-clearHistoryBtn.addEventListener("click", () => {
-  localStorage.removeItem(HISTORY_KEY);
-  renderHistory();
-});
+if (clearHistoryBtn) {
+  clearHistoryBtn.addEventListener("click", () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  });
+}
 
-loadExampleBtn.addEventListener("click", () => {
-  inputEl.value = demos.bank;
-  inputEl.focus();
-  updateManualReviewLink();
-});
+if (loadExampleBtn) {
+  loadExampleBtn.addEventListener("click", () => {
+    inputEl.value = demos.bank;
+    inputEl.focus();
+    updateManualReviewLink();
+  });
+}
 
 demoButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -1341,9 +1396,15 @@ demoButtons.forEach((button) => {
 });
 
 inputEl.addEventListener("input", updateManualReviewLink);
-caseForm.addEventListener("submit", handleCaseSubmit);
-adminBtn.addEventListener("click", openAdmin);
-exportCasesBtn.addEventListener("click", exportCases);
+if (caseForm) {
+  caseForm.addEventListener("submit", handleCaseSubmit);
+}
+if (adminBtn) {
+  adminBtn.addEventListener("click", openAdmin);
+}
+if (exportCasesBtn) {
+  exportCasesBtn.addEventListener("click", exportCases);
+}
 
 if (resetUsageBtn) {
   resetUsageBtn.addEventListener("click", () => {
@@ -1375,6 +1436,46 @@ if (shareSiteBtn) {
   shareSiteBtn.addEventListener("click", shareSite);
 }
 
+if (openWhatsappGuideBtn) {
+  openWhatsappGuideBtn.addEventListener("click", openWhatsappGuide);
+}
+
+if (openShareGuideBtn) {
+  openShareGuideBtn.addEventListener("click", openShareGuide);
+}
+
+if (closeWhatsappGuideBtn) {
+  closeWhatsappGuideBtn.addEventListener("click", closeWhatsappGuide);
+}
+
+if (understoodWhatsappGuideBtn) {
+  understoodWhatsappGuideBtn.addEventListener("click", closeWhatsappGuide);
+}
+
+if (guideImage) {
+  guideImage.addEventListener("error", () => {
+    guideImage.hidden = true;
+    if (guideImagePlaceholder) guideImagePlaceholder.hidden = false;
+  });
+
+  guideImage.addEventListener("load", () => {
+    guideImage.hidden = false;
+    if (guideImagePlaceholder) guideImagePlaceholder.hidden = true;
+  });
+}
+
+if (whatsappGuideModal) {
+  whatsappGuideModal.addEventListener("click", (event) => {
+    if (event.target === whatsappGuideModal) closeWhatsappGuide();
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && whatsappGuideModal && !whatsappGuideModal.hidden) {
+    closeWhatsappGuide();
+  }
+});
+
 if (manualReviewLink) {
   manualReviewLink.addEventListener("click", (event) => {
     if (isWhatsAppConfigured()) return;
@@ -1383,13 +1484,15 @@ if (manualReviewLink) {
   });
 }
 
-adminCasesList.addEventListener("click", (event) => {
-  const reviewId = event.target.dataset.review;
-  const deleteId = event.target.dataset.delete;
+if (adminCasesList) {
+  adminCasesList.addEventListener("click", (event) => {
+    const reviewId = event.target.dataset.review;
+    const deleteId = event.target.dataset.delete;
 
-  if (reviewId) updateCaseStatus(reviewId, "reviewed");
-  if (deleteId) deleteCase(deleteId);
-});
+    if (reviewId) updateCaseStatus(reviewId, "reviewed");
+    if (deleteId) deleteCase(deleteId);
+  });
+}
 
 updateManualReviewLink();
 recoverFreeChecksIfNeeded();
