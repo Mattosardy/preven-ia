@@ -97,33 +97,35 @@ const WHATSAPP_NUMBER = "598XXXXXXXX";
 
 Usa formato internacional sin `+`, espacios ni guiones. Si lo dejas vacio, la app mostrara que WhatsApp no esta configurado.
 
-## Como cambiar datos de pago
+## Monetizacion en pausa
 
-En `app.js`:
+Preven-IA queda gratuito mientras crece y busca adopcion. No hay planes pagos, centro de cobro ni bloqueo por cantidad de verificaciones.
 
-```js
-const PREX_ACCOUNT = "33909";
-const PREX_OWNER = "Matias Arballo";
-const PAYPAL_EMAIL = "matiast3@gmail.com";
-const BTC_WALLET = "bc1q3scj8nh5ta300slstnjxn903wdt5d48wr0qqt5";
-const PREMIUM_PACK_PRICE = "$99 UYU";
-const HUMAN_REVIEW_PRICE = "$199 UYU";
-```
-
-## Como funciona el limite de verificaciones
+## Como funcionan las verificaciones
 
 Preven-IA usa `localStorage`, sin backend:
 
-- 5 verificaciones gratis iniciales.
-- Recupera 1 verificacion gratis cada 24 horas, hasta un maximo de 5.
-- Se pueden desbloquear verificaciones con codigos locales.
-- Si no quedan verificaciones, muestra opciones de pago/desbloqueo.
+- Las verificaciones son gratuitas y sin limite.
+- `localStorage` guarda historial, casos y contador estadistico de uso.
+- El boton de restablecer pruebas reinicia esa estadistica local.
 
 Clave local:
 
 ```js
 const USAGE_STORAGE_KEY = "prevenia_usage_v1";
 ```
+
+## Como se muestran los resultados
+
+La pantalla principal simplifica el analisis en 3 estados:
+
+- Verde: `ABRIR`.
+- Amarillo: `CUIDADO`.
+- Rojo: `PELIGRO`.
+
+El detalle tecnico queda disponible en `Ver detalles` para quien quiera profundizar.
+
+Al analizar, el recuadro principal de busqueda se transforma en el cartel del resultado. Despues de unos 15 segundos se limpia la vista y vuelve automaticamente al buscador para ahorrar espacio en moviles.
 
 Esto es solo para MVP. El usuario puede borrar `localStorage`. Para control real se necesita backend.
 
@@ -171,10 +173,10 @@ La app funciona offline despues de cargar una vez.
 ## Verificacion antes de publicar
 
 - Probar `Analizar`.
-- Probar input vacio y confirmar que no consume verificaciones.
+- Probar input vacio.
 - Probar fallback local con `AI_ENABLED = false`.
 - Probar con endpoint IA real cuando el Worker este desplegado.
-- Probar centro de pagos y WhatsApp.
+- Probar solicitud de revision manual por WhatsApp.
 - Probar copiar informe y compartir por WhatsApp.
 - Probar PWA instalada.
 - Probar offline despues de cargar una vez.
@@ -184,9 +186,8 @@ La app funciona offline despues de cargar una vez.
 
 - No hay base de datos.
 - Historial, casos y verificaciones viven en `localStorage`.
-- Los codigos locales no son seguridad real.
 - El analisis es preventivo y orientativo.
-- Para cobros y control real se recomienda backend.
+- Si mas adelante vuelve la monetizacion o control real de cuotas, se recomienda backend.
 
 ## Documentacion Android
 

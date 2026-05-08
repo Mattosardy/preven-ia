@@ -209,6 +209,24 @@ h3 {
   padding: 14px;
 }
 
+.scanner-card.result-mode {
+  padding: 10px;
+}
+
+.scanner-input-content[hidden],
+.scanner-result[hidden],
+.result-card[hidden] {
+  display: none;
+}
+
+.scanner-input-content {
+  display: grid;
+}
+
+.scanner-result {
+  display: block;
+}
+
 .input-label,
 .form-field label {
   display: block;
@@ -520,50 +538,6 @@ select:focus-visible,
   gap: 8px;
 }
 
-.limit-card {
-  display: grid;
-  gap: 12px;
-  border-color: #FDE68A;
-  background: #FFFBEB;
-  padding: 14px;
-}
-
-.limit-card[hidden] {
-  display: none;
-}
-
-.limit-card h2 {
-  margin-bottom: 5px;
-}
-
-.limit-card p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.limit-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.unlock-box {
-  display: grid;
-  gap: 8px;
-  border: 1px solid #FDE68A;
-  border-radius: 16px;
-  background: #FFFFFF;
-  padding: 12px;
-}
-
-.unlock-box[hidden] {
-  display: none;
-}
-
-.unlock-row {
-  display: grid;
-  gap: 8px;
-}
-
 .install-card[hidden] {
   display: none;
 }
@@ -655,12 +629,27 @@ select:focus-visible,
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
 }
 
-.traffic-header h2 {
-  margin: 0;
-  color: var(--traffic-color);
-  font-size: clamp(3rem, 17vw, 5.2rem);
-  line-height: 0.9;
+.traffic-decision {
+  width: min(100%, 420px);
+  min-height: 74px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--traffic-color);
+  color: #FFFFFF;
+  font-size: clamp(2.35rem, 13vw, 4.25rem);
+  font-weight: 950;
+  line-height: 1;
   letter-spacing: 0;
+  box-shadow: 0 14px 28px var(--traffic-glow);
+}
+
+.traffic-decision:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.traffic-yellow .traffic-decision {
+  color: #713F12;
 }
 
 .traffic-header p {
@@ -669,18 +658,6 @@ select:focus-visible,
   color: var(--text);
   font-size: 1.08rem;
   font-weight: 800;
-}
-
-.traffic-action {
-  min-width: min(100%, 260px);
-  background: var(--traffic-color);
-  color: #FFFFFF;
-  box-shadow: none;
-}
-
-.traffic-action:disabled {
-  cursor: default;
-  opacity: 1;
 }
 
 .traffic-badge {
@@ -693,6 +670,14 @@ select:focus-visible,
   color: var(--muted);
   padding: 0 11px;
   font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.result-reset-note {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.88rem;
   font-weight: 800;
 }
 
@@ -995,104 +980,6 @@ select:focus-visible,
   gap: 10px;
 }
 
-.payment-center {
-  display: grid;
-  gap: 12px;
-  margin-top: 14px;
-  border: 1px solid #BAE6FD;
-  border-radius: 18px;
-  background: #F0F9FF;
-  padding: 12px;
-}
-
-.payment-head {
-  display: grid;
-  gap: 8px;
-}
-
-.payment-head h3 {
-  margin-bottom: 0;
-}
-
-.price-row {
-  display: grid;
-  gap: 6px;
-}
-
-.price-row span {
-  display: inline-flex;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid #D9E7F7;
-  border-radius: 14px;
-  background: #FFFFFF;
-  padding: 9px 10px;
-  color: var(--muted);
-}
-
-.price-row strong {
-  color: var(--text);
-}
-
-.payment-grid {
-  display: grid;
-  gap: 10px;
-}
-
-.payment-card {
-  display: grid;
-  gap: 11px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #FFFFFF;
-  padding: 12px;
-}
-
-.payment-card h3 {
-  margin-bottom: 5px;
-}
-
-.payment-card p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.payment-actions {
-  display: grid;
-  gap: 8px;
-}
-
-.btc-wallet-box {
-  display: grid;
-  gap: 9px;
-}
-
-.btc-wallet-box[hidden] {
-  display: none;
-}
-
-.btc-wallet-box code {
-  display: block;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  background: #F8FAFC;
-  color: var(--text);
-  padding: 10px;
-  overflow-wrap: anywhere;
-  font-size: 0.9rem;
-}
-
-.qr-placeholder {
-  display: grid;
-  place-items: center;
-  min-height: 96px;
-  border: 1px dashed #93C5FD;
-  border-radius: 14px;
-  background: #EFF6FF;
-  color: var(--blue);
-  font-weight: 800;
-}
-
 .trust-note {
   margin: 0;
   border-left: 4px solid var(--green);
@@ -1101,10 +988,6 @@ select:focus-visible,
   color: #166534;
   padding: 10px 11px;
   font-weight: 750;
-}
-
-.payment-done-btn {
-  width: 100%;
 }
 
 .risk-low {
@@ -1290,6 +1173,31 @@ select:focus-visible,
     width: 100%;
   }
 
+  .scanner-card.result-mode {
+    padding: 8px;
+  }
+
+  .scanner-result .traffic-header {
+    gap: 8px;
+    padding: 14px 10px;
+  }
+
+  .scanner-result .traffic-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 1.65rem;
+  }
+
+  .scanner-result .traffic-decision {
+    min-height: 58px;
+    border-radius: 15px;
+    font-size: clamp(2rem, 12vw, 3rem);
+  }
+
+  .scanner-result .traffic-header p {
+    font-size: 0.98rem;
+  }
+
   .primary-actions {
     grid-template-columns: 1fr 0.52fr;
   }
@@ -1348,21 +1256,11 @@ select:focus-visible,
   }
 
   .form-grid,
-  .report-grid,
-  .payment-grid {
+  .report-grid {
     grid-template-columns: 1fr 1fr;
   }
 
-  .usage-status,
-  .unlock-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .payment-card:nth-child(3) {
-    grid-column: 1 / -1;
-  }
-
-  .price-row {
+  .usage-status {
     grid-template-columns: 1fr 1fr;
   }
 

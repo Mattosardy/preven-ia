@@ -2,6 +2,9 @@ const inputEl = document.querySelector("#suspicious-input");
 const analyzeBtn = document.querySelector("#analyze-btn");
 const clearBtn = document.querySelector("#clear-btn");
 const resultEl = document.querySelector("#result");
+const scannerCard = document.querySelector(".scanner-card");
+const scannerInputContent = document.querySelector("#scanner-input-content");
+const scannerResult = document.querySelector("#scanner-result");
 const historyListEl = document.querySelector("#history-list");
 const clearHistoryBtn = document.querySelector("#clear-history-btn");
 const demoButtons = document.querySelectorAll("[data-demo]");
@@ -16,24 +19,8 @@ const exportCasesBtn = document.querySelector("#export-cases-btn");
 const installCard = document.querySelector("#install-card");
 const installBtn = document.querySelector("#install-btn");
 const installCopy = document.querySelector("#install-copy");
-const copyPrexBtn = document.querySelector("#copy-prex-btn");
-const openPaypalBtn = document.querySelector("#open-paypal-btn");
-const copyPaypalBtn = document.querySelector("#copy-paypal-btn");
-const copyBtcBtn = document.querySelector("#copy-btc-btn");
-const toggleBtcBtn = document.querySelector("#toggle-btc-btn");
-const btcWalletBox = document.querySelector("#btc-wallet-box");
-const paymentDoneBtn = document.querySelector("#payment-done-btn");
-const paymentMessage = document.querySelector("#payment-message");
+const manualReviewMessage = document.querySelector("#manual-review-message");
 const freeChecksCount = document.querySelector("#free-checks-count");
-const premiumChecksCount = document.querySelector("#premium-checks-count");
-const limitCard = document.querySelector("#limit-card");
-const showPaymentMethodsBtn = document.querySelector("#show-payment-methods-btn");
-const sendPaymentProofBtn = document.querySelector("#send-payment-proof-btn");
-const showUnlockCodeBtn = document.querySelector("#show-unlock-code-btn");
-const unlockBox = document.querySelector("#unlock-box");
-const unlockCodeInput = document.querySelector("#unlock-code-input");
-const applyUnlockCodeBtn = document.querySelector("#apply-unlock-code-btn");
-const unlockMessage = document.querySelector("#unlock-message");
 const resetUsageBtn = document.querySelector("#reset-usage-btn");
 const sharedCard = document.querySelector("#shared-card");
 const analyzeSharedBtn = document.querySelector("#analyze-shared-btn");
@@ -43,30 +30,15 @@ const shareSiteMessage = document.querySelector("#share-site-message");
 
 const WHATSAPP_NUMBER = "598XXXXXXXX";
 const BUSINESS_NAME = "Preven-IA";
-const MANUAL_REVIEW_PRICE = "USD 5";
+const MANUAL_REVIEW_LABEL = "gratis por ahora";
 const COUNTRY = "Uruguay / LATAM";
 const CONTACT_EMAIL = "contacto@preven-ia.com";
 const ADMIN_PIN = "1234";
-const PREX_ACCOUNT = "33909";
-const PREX_OWNER = "Matias Arballo";
-const PAYPAL_EMAIL = "matiast3@gmail.com";
-const BTC_WALLET = "bc1q3scj8nh5ta300slstnjxn903wdt5d48wr0qqt5";
-const FREE_CHECKS_INITIAL = 5;
-const DAILY_FREE_RECOVERY = 1;
-const RECOVERY_HOURS = 24;
-const PREMIUM_PACK_CHECKS = 30;
-const PREMIUM_PACK_PRICE = "$99 UYU";
-const HUMAN_REVIEW_PRICE = "$199 UYU";
 const AI_ENABLED = true;
 const AI_ENDPOINT = "https://TU-WORKER.prevenia.workers.dev/analyze";
 const AI_TIMEOUT_MS = 12000;
 const SOUND_ENABLED = false;
-
-const UNLOCK_CODES = [
-  { code: "PREVENIA30", checks: 30, label: "Pack 30 verificaciones" },
-  { code: "PREVENIA100", checks: 100, label: "Pack 100 verificaciones" },
-  { code: "PREVENIADEMO", checks: 10, label: "Demo" }
-];
+const RESULT_AUTO_RESET_MS = 15000;
 
 const HISTORY_KEY = "nocaigas-risk-history-v2";
 const CASES_KEY = "nocaigas-pending-cases-v1";
@@ -74,7 +46,7 @@ const USAGE_STORAGE_KEY = "prevenia_usage_v1";
 
 let currentResult = null;
 let deferredPrompt = null;
-let lastPaymentMethod = "";
+let resultResetTimer = null;
 
 const demos = {
   crypto: "Hola! Última oportunidad para duplicá tu dinero en USDT. Depósito mínimo hoy y retiro pendiente en 24 hs. Soporte oficial Binance: https://bonus-binance-wallet-verify.xyz/login",
@@ -179,6 +151,33 @@ function analyzeRisk(input) {
   const shorteners = ["bit.ly", "tinyurl.com", "t.co", "cutt.ly", "shorturl.at", "shorturl.com"];
   const brandWords = ["paypal", "mercado libre", "mercadolibre", "santander", "itau", "brou", "prex", "binance", "coinbase"];
   const rareTlds = ["xyz", "top", "click", "support", "live", "quest", "icu", "buzz", "work", "cam", "monster", "shop", "site"];
+
+  urls.forEach((rawUrl) => {
+    const cleanUrl = rawUrl.replace(/[),.;!?]+$/g, "");
+    const domain = extractDomain(cleanUrl);
+    const redirectFlags = detectRedirectPatterns(cleanUrl);
+    const obfuscationFlags = detectObfuscation(cleanUrl);
+    const trustedButAbused = domain && isTrustedHostingDomain(domain) && (redirectFlags.length > 0 || obfuscationFlags.length >= 2);
+
+    redirectFlags.forEach((flag) => addAlert(flag.points, flag.message, "phishing"));
+    obfuscationFlags.forEach((flag) => addAlert(flag.points, flag.message, "phishing"));
+
+    if (trustedButAbused) {
+      addAlert(
+        35,
+        `Dominio confiable usado de forma sospechosa (${domain}): combina hosting conocido con redirects, hashes o parametros ofuscados.`,
+        "phishing"
+      );
+    }
+
+    if (redirectFlags.length > 0 && obfuscationFlags.length > 0) {
+      addAlert(
+        28,
+        "Detectamos patrones de redireccion y ofuscacion comunes en campanas de phishing.",
+        "phishing"
+      );
+    }
+  });
 
   domains.forEach((domain) => {
     const normalizedDomain = normalizeText(domain);
@@ -323,6 +322,133 @@ function extractDomain(value) {
   }
 }
 
+function detectRedirectPatterns(url) {
+  const decoded = safeDecodeUrl(url);
+  const normalized = normalizeText(decoded);
+  const flags = [];
+
+  const addFlag = (key, points, message) => {
+    if (!flags.some((flag) => flag.key === key)) flags.push({ key, points, message });
+  };
+
+  if (/#\/?redirect/i.test(decoded) || /redirect\.html/i.test(decoded) || /\.html#\//i.test(decoded)) {
+    addFlag("hash-redirect", 38, "Uso sospechoso de redirects dentro del hash o archivo HTML.");
+  }
+
+  if (/\bredirect\b|redirect_uri|returnurl|return_url/i.test(decoded)) {
+    addFlag("redirect-word", 24, "La URL contiene terminos de redireccion usados frecuentemente en phishing.");
+  }
+
+  if (/[?&#](url|target|next|goto|continue|forward|dest|destination|redirect_uri|return|returnurl|return_url)=/i.test(decoded)) {
+    addFlag("redirect-param", 30, "La URL incluye parametros que pueden redirigir a otro destino.");
+  }
+
+  if (/%3a%2f%2f|https?%3a%2f%2f|https?:\/\/.+https?:\/\//i.test(url) || /https?:\/\/.+https?:\/\//i.test(decoded)) {
+    addFlag("encoded-chain", 34, "Detectamos una cadena de redireccion o URL codificada dentro de otra URL.");
+  }
+
+  if (normalized.includes("login") && (normalized.includes("continue") || normalized.includes("redirect") || normalized.includes("next"))) {
+    addFlag("login-redirect", 28, "Combina login con redireccion, un patron comun de robo de credenciales.");
+  }
+
+  return flags;
+}
+
+function detectObfuscation(url) {
+  const decoded = safeDecodeUrl(url);
+  const flags = [];
+  const addFlag = (key, points, message) => {
+    if (!flags.some((flag) => flag.key === key)) flags.push({ key, points, message });
+  };
+
+  const compact = decoded.replace(/\s/g, "");
+  const query = decoded.split("?")[1] || "";
+  const hash = decoded.split("#")[1] || "";
+  const symbolCount = (compact.match(/[._~%=&?#/:;,+-]/g) || []).length;
+  const digitCount = (compact.match(/\d/g) || []).length;
+  const encodedCount = (url.match(/%[0-9a-f]{2}/gi) || []).length;
+  const separators = (compact.match(/[._~=&?#/:;,+-]/g) || []).length;
+  const randomLikeTokens = compact.match(/[a-z]*_x\d{3,}|[a-z]{2,}_[a-z]{4,}|[a-z0-9]{18,}/gi) || [];
+
+  if (decoded.length > 180) {
+    addFlag("very-long-url", 24, "URL extremadamente larga.");
+  }
+
+  if (query.length > 140 || hash.length > 60) {
+    addFlag("long-query-hash", 26, "Parametros u hash excesivamente largos.");
+  }
+
+  if (/#.{30,}/.test(decoded) || /#[^#]*(redirect|token|state|continue|next)/i.test(decoded)) {
+    addFlag("suspicious-hash", 26, "Hash sospechoso o demasiado largo dentro de la URL.");
+  }
+
+  if (encodedCount >= 4 || /(?:%2f|%3d|%26|%23|%3f)/i.test(url)) {
+    addFlag("encoded-payload", 24, "La URL contiene payloads codificados u ocultos.");
+  }
+
+  if (symbolCount > 22 || separators > 26) {
+    addFlag("many-separators", 18, "Demasiados simbolos o separadores en la URL.");
+  }
+
+  if (digitCount >= 18 || randomLikeTokens.length >= 2) {
+    addFlag("random-tokens", 24, "Parametros ofuscados o tokens aleatorios detectados.");
+  }
+
+  if (/\b(_x\d{3,}|vl_fresh|token|tokens|state|session|payload|callback|tracking|utm_|fbclid|gclid)\b/i.test(decoded)) {
+    addFlag("tracking-token", 22, "Tokens, tracking o subcadenas sospechosas en la URL.");
+  }
+
+  if (calculateEntropy(compact) > 4.35 && compact.length > 90) {
+    addFlag("high-entropy", 22, "La URL tiene entropia alta, compatible con ofuscacion.");
+  }
+
+  return flags;
+}
+
+function safeDecodeUrl(value) {
+  let decoded = String(value || "");
+  for (let index = 0; index < 2; index += 1) {
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      break;
+    }
+  }
+  return decoded;
+}
+
+function calculateEntropy(value) {
+  if (!value) return 0;
+  const counts = {};
+  for (const char of value) counts[char] = (counts[char] || 0) + 1;
+  return Object.values(counts).reduce((sum, count) => {
+    const probability = count / value.length;
+    return sum - (probability * Math.log2(probability));
+  }, 0);
+}
+
+function isTrustedHostingDomain(domain) {
+  const normalizedDomain = normalizeText(domain);
+  const trustedDomains = [
+    "googleapis.com",
+    "storage.googleapis.com",
+    "firebaseapp.com",
+    "web.app",
+    "github.io",
+    "cloudflare.com",
+    "workers.dev",
+    "pages.dev",
+    "drive.google.com",
+    "docs.google.com"
+  ];
+
+  return trustedDomains.some((trustedDomain) => (
+    normalizedDomain === trustedDomain || normalizedDomain.endsWith(`.${trustedDomain}`)
+  ));
+}
+
 function normalizeText(value) {
   return String(value)
     .toLowerCase()
@@ -382,6 +508,10 @@ function buildSignals(alerts, domains, pattern) {
 
 function buildExplanation(score, alerts, urlCount, pattern) {
   const count = alerts.length;
+  const hasModernPhishingPattern = alerts.some((alert) => normalizeText(alert).includes("redireccion y ofuscacion"));
+  if (hasModernPhishingPattern) {
+    return "Detectamos patrones de redirección y ofuscación comunes en campañas de phishing.";
+  }
 
   if (score === 0) {
     return "El sistema no pudo evaluar riesgo porque no recibió contenido.";
@@ -424,7 +554,7 @@ function buildShouldDo(score, pattern) {
   const actions = [
     "Guardá capturas, enlaces, usuario, wallet o número de teléfono como evidencia.",
     "Verificá la identidad por una app oficial, web oficial o teléfono publicado por la empresa.",
-    `Pedí revisión manual antes de transferir dinero, invertir en crypto o entregar datos. Precio básico: ${MANUAL_REVIEW_PRICE}.`
+    "Pedí revisión manual antes de transferir dinero, invertir en crypto o entregar datos."
   ];
 
   if (pattern === "Crypto scam") {
@@ -527,9 +657,8 @@ function getTrafficLightResult(result) {
     return {
       level: "green",
       title: "ABRIR",
-      subtitle: "No detectamos señales fuertes de estafa.",
-      icon: "✓",
-      action: "Abrir enlace"
+      subtitle: "No encontramos señales fuertes de estafa.",
+      icon: "OK"
     };
   }
 
@@ -537,26 +666,17 @@ function getTrafficLightResult(result) {
     return {
       level: "yellow",
       title: "CUIDADO",
-      subtitle: "Hay señales sospechosas. Verificá antes de continuar.",
-      icon: "!",
-      action: "Revisar antes de abrir"
+      subtitle: "Hay señales raras. Verificá antes de tocar enlaces, pagar o responder.",
+      icon: "!"
     };
   }
 
   return {
     level: "red",
     title: "PELIGRO",
-    subtitle: "Detectamos múltiples señales comunes de estafa.",
-    icon: "!",
-    action: "No abrir"
+    subtitle: "Puede ser una estafa. No abras enlaces, no pagues y no compartas datos.",
+    icon: "!!"
   };
-}
-
-function extractFirstUrl(text) {
-  const match = String(text || "").match(/\bhttps?:\/\/[^\s]+|\bwww\.[^\s]+|\b[a-z0-9-]+\.[a-z]{2,}(?:\/[^\s]*)?/i);
-  if (!match) return "";
-  const raw = match[0].replace(/[),.;!?]+$/g, "");
-  return raw.startsWith("http") ? raw : `https://${raw}`;
 }
 
 function playResultSound(level) {
@@ -574,14 +694,38 @@ function playResultSound(level) {
   oscillator.stop(audio.currentTime + 0.12);
 }
 
+function clearResultResetTimer() {
+  if (!resultResetTimer) return;
+  clearTimeout(resultResetTimer);
+  resultResetTimer = null;
+}
+
+function showSearchMode({ focus = false } = {}) {
+  clearResultResetTimer();
+  if (scannerInputContent) scannerInputContent.hidden = false;
+  if (scannerResult) {
+    scannerResult.hidden = true;
+    scannerResult.innerHTML = "";
+  }
+  if (scannerCard) scannerCard.classList.remove("result-mode");
+  if (resultEl) resultEl.hidden = true;
+  if (focus) inputEl.focus();
+}
+
+function scheduleResultAutoReset() {
+  clearResultResetTimer();
+  resultResetTimer = setTimeout(() => {
+    inputEl.value = "";
+    currentResult = null;
+    showSearchMode();
+    updateManualReviewLink();
+  }, RESULT_AUTO_RESET_MS);
+}
+
 function renderResult(result) {
   const { score, category, confidence, pattern, alerts, signals, explanation, recommendation, analyzedAt, executiveSummary } = result;
   const reviewUrl = buildManualReviewUrl(result);
   const traffic = getTrafficLightResult(result);
-  const firstUrl = extractFirstUrl(result.input);
-  const visibleAction = traffic.level === "green" && firstUrl
-    ? `<a class="btn traffic-action" href="${escapeHtml(firstUrl)}" target="_blank" rel="noopener">${traffic.action}</a>`
-    : `<button class="btn traffic-action" type="button" disabled>${traffic.action}</button>`;
   const aiApplied = Boolean(result.ai && result.ai.ok);
   const aiStatusText = aiApplied ? "Revisión online aplicada" : "Análisis local";
   const aiFallbackText = result.aiFallbackMessage || "";
@@ -598,14 +742,19 @@ function renderResult(result) {
           </section>
   ` : "";
 
-  resultEl.className = "result-card panel";
-  resultEl.innerHTML = `
+  if (scannerInputContent) scannerInputContent.hidden = true;
+  if (scannerCard) scannerCard.classList.add("result-mode");
+  if (scannerResult) scannerResult.hidden = false;
+  if (resultEl) resultEl.hidden = true;
+
+  const targetEl = scannerResult || resultEl;
+  targetEl.className = "scanner-result";
+  targetEl.innerHTML = `
     <article class="report traffic-report traffic-${traffic.level}">
       <header class="traffic-header">
         <div class="traffic-icon" aria-hidden="true">${traffic.icon}</div>
-        <h2>${traffic.title}</h2>
+        <button class="traffic-decision" type="button" disabled>${traffic.title}</button>
         <p>${traffic.subtitle}</p>
-        ${visibleAction}
         <span class="traffic-badge">${escapeHtml(aiStatusText)}</span>
       </header>
 
@@ -665,16 +814,18 @@ function renderResult(result) {
         </div>
 
         <div class="result-actions">
-          <a class="btn btn-primary" href="${reviewUrl}" target="_blank" rel="noopener">Revisión manual (${MANUAL_REVIEW_PRICE})</a>
+          <a class="btn btn-primary" href="${reviewUrl}" target="_blank" rel="noopener">Revisión manual gratis</a>
           <button class="btn btn-secondary" type="button" id="copy-result-btn">Copiar informe</button>
           <button class="btn btn-secondary" type="button" id="share-result-btn">Compartir resultado</button>
         </div>
       </details>
+      <p class="result-reset-note">La pantalla vuelve al buscador en 15 segundos.</p>
     </article>
   `;
 
-  document.querySelector("#copy-result-btn").addEventListener("click", () => copyResult(result));
-  document.querySelector("#share-result-btn").addEventListener("click", () => shareResult(result));
+  targetEl.querySelector("#copy-result-btn").addEventListener("click", () => copyResult(result));
+  targetEl.querySelector("#share-result-btn").addEventListener("click", () => shareResult(result));
+  scheduleResultAutoReset();
   playResultSound(traffic.level);
 }
 
@@ -687,7 +838,8 @@ function saveHistory(result) {
     date: result.analyzedAt,
     score: result.score,
     category: result.category.label,
-    level: result.category.level
+    level: result.category.level,
+    decision: getTrafficLightResult(result).title
   };
 
   history.unshift(item);
@@ -706,7 +858,7 @@ function renderHistory() {
     <article class="history-item">
       <div class="history-meta">
         <span>${escapeHtml(item.date)}</span>
-        <strong class="risk-${item.level}">${item.score}/100 · ${escapeHtml(item.category)}</strong>
+        <strong class="risk-${item.level}">${escapeHtml(item.decision || item.category)}</strong>
       </div>
       <p class="history-summary">${escapeHtml(item.summary)}</p>
     </article>
@@ -716,16 +868,8 @@ function renderHistory() {
 function clearForm() {
   inputEl.value = "";
   currentResult = null;
-  resultEl.className = "result-card panel is-empty";
-  resultEl.innerHTML = `
-    <div class="empty-state">
-      <span class="empty-icon">IA</span>
-      <h2>Esperando análisis</h2>
-      <p>El resultado aparecerá con categoría, puntaje y recomendación preventiva.</p>
-    </div>
-  `;
+  showSearchMode({ focus: true });
   updateManualReviewLink();
-  inputEl.focus();
 }
 
 function getHistory() {
@@ -753,12 +897,8 @@ function saveCases(cases) {
 // Este sistema es para MVP. localStorage puede ser borrado por el usuario. Para control real se necesitará backend.
 function createDefaultUsage() {
   return {
-    freeChecksLeft: FREE_CHECKS_INITIAL,
-    premiumChecksLeft: 0,
     lastRecoveryAt: Date.now(),
-    totalChecksUsed: 0,
-    premiumActive: false,
-    unlockHistory: []
+    totalChecksUsed: 0
   };
 }
 
@@ -768,8 +908,7 @@ function getUsage() {
     if (!parsed || typeof parsed !== "object") return createDefaultUsage();
     return {
       ...createDefaultUsage(),
-      ...parsed,
-      unlockHistory: Array.isArray(parsed.unlockHistory) ? parsed.unlockHistory : []
+      ...parsed
     };
   } catch {
     return createDefaultUsage();
@@ -782,16 +921,8 @@ function saveUsage(usage) {
 
 function recoverFreeChecksIfNeeded() {
   const usage = getUsage();
-  const now = Date.now();
-  const recoveryMs = RECOVERY_HOURS * 60 * 60 * 1000;
-  const periods = Math.floor((now - Number(usage.lastRecoveryAt || now)) / recoveryMs);
-
-  if (periods > 0 && usage.freeChecksLeft < FREE_CHECKS_INITIAL) {
-    usage.freeChecksLeft = Math.min(FREE_CHECKS_INITIAL, usage.freeChecksLeft + (periods * DAILY_FREE_RECOVERY));
-    usage.lastRecoveryAt = now;
-    saveUsage(usage);
-  } else if (!usage.lastRecoveryAt) {
-    usage.lastRecoveryAt = now;
+  if (!usage.lastRecoveryAt) {
+    usage.lastRecoveryAt = Date.now();
     saveUsage(usage);
   }
 
@@ -800,71 +931,16 @@ function recoverFreeChecksIfNeeded() {
 }
 
 function updateUsageDisplay(usage = getUsage()) {
-  if (freeChecksCount) freeChecksCount.textContent = usage.freeChecksLeft;
-  if (premiumChecksCount) premiumChecksCount.textContent = usage.premiumChecksLeft;
+  if (freeChecksCount) freeChecksCount.textContent = "sin límite";
 }
 
 function consumeVerification() {
-  const usage = recoverFreeChecksIfNeeded();
-
-  if (usage.freeChecksLeft > 0) {
-    usage.freeChecksLeft -= 1;
-  } else if (usage.premiumChecksLeft > 0) {
-    usage.premiumChecksLeft -= 1;
-  } else {
-    showLimitReached();
-    return false;
-  }
+  const usage = getUsage();
 
   usage.totalChecksUsed += 1;
   saveUsage(usage);
   updateUsageDisplay(usage);
-  if (limitCard) limitCard.hidden = true;
   return true;
-}
-
-function showLimitReached() {
-  if (limitCard) {
-    limitCard.hidden = false;
-    limitCard.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-}
-
-function applyUnlockCode() {
-  if (!unlockCodeInput || !unlockMessage) return;
-
-  const enteredCode = unlockCodeInput.value.trim().toUpperCase();
-  const usage = getUsage();
-  const match = UNLOCK_CODES.find((item) => item.code === enteredCode);
-
-  if (!match) {
-    unlockMessage.textContent = "Código no válido.";
-    unlockMessage.className = "form-message error";
-    return;
-  }
-
-  const alreadyUsed = usage.unlockHistory.some((item) => item.code === match.code);
-  if (alreadyUsed) {
-    unlockMessage.textContent = "Ese código ya fue usado en este navegador.";
-    unlockMessage.className = "form-message error";
-    return;
-  }
-
-  usage.premiumChecksLeft += match.checks;
-  usage.premiumActive = true;
-  usage.unlockHistory.push({
-    date: formatDateTime(new Date()),
-    code: match.code,
-    label: match.label,
-    checksAdded: match.checks
-  });
-
-  saveUsage(usage);
-  updateUsageDisplay(usage);
-  unlockMessage.textContent = "Código aplicado correctamente.";
-  unlockMessage.className = "form-message success";
-  unlockCodeInput.value = "";
-  if (limitCard) limitCard.hidden = true;
 }
 
 function createSummary(text) {
@@ -918,7 +994,7 @@ function handleCaseSubmit(event) {
   cases.unshift(caseItem);
   saveCases(cases);
   caseForm.reset();
-  showCaseMessage(`Caso guardado como pendiente. Revisión básica: ${MANUAL_REVIEW_PRICE}.`, "success");
+  showCaseMessage("Caso guardado como pendiente. La revisión manual está gratis por ahora.", "success");
   renderAdminCases();
 }
 
@@ -1061,7 +1137,7 @@ function formatResultText(result) {
     `Resumen: ${result.executiveSummary}`,
     `Alertas principales: ${result.alerts.slice(0, 5).join(" | ")}`,
     `Recomendación: ${result.recommendation}`,
-    `Revisión manual básica: ${MANUAL_REVIEW_PRICE}`,
+    `Revisión manual: ${MANUAL_REVIEW_LABEL}`,
     `Contacto: ${CONTACT_EMAIL}`,
     "Aviso: este análisis es orientativo y no reemplaza una investigación profesional."
   ];
@@ -1112,39 +1188,6 @@ function buildManualReviewUrl(result = currentResult) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
-function buildPaymentConfirmationUrl() {
-  if (!isWhatsAppConfigured()) return "";
-
-  const summary = currentResult && currentResult.input ? createSummary(currentResult.input) : createSummary(inputEl.value || "A completar");
-  const score = currentResult && currentResult.input ? currentResult.score : "sin puntaje";
-  const category = currentResult && currentResult.input ? currentResult.category.label : "sin categoría";
-  const method = lastPaymentMethod || "A completar";
-  const text = [
-    "Hola, ya realicé el pago para una revisión humana en Preven-IA.",
-    `Método usado: ${method}`,
-    `Caso: ${summary}`,
-    `Puntaje: ${score}`,
-    `Categoría: ${category}`
-  ].join("\n");
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-}
-
-function buildUnlockPaymentProofUrl() {
-  if (!isWhatsAppConfigured()) return "";
-
-  const summary = currentResult && currentResult.input ? createSummary(currentResult.input) : createSummary(inputEl.value || "A completar");
-  const text = [
-    "Hola, ya realicé el pago para desbloquear verificaciones en Preven-IA.",
-    "Quiero activar:",
-    "Método de pago:",
-    "Comprobante:",
-    `Mi caso o consulta: ${summary}`
-  ].join("\n");
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-}
-
 function buildAndroidNotifyUrl() {
   if (!isWhatsAppConfigured()) return "";
   const text = "Hola, quiero que me avisen cuando esté disponible Preven-IA para Android.";
@@ -1169,67 +1212,10 @@ function loadSharedTextFromUrl() {
   }
 }
 
-function showPaymentMessage(message) {
-  if (!paymentMessage) return;
-  paymentMessage.textContent = message;
-  paymentMessage.className = "form-message success";
-}
-
-function setupPaymentCenter() {
-  if (copyPrexBtn) {
-    copyPrexBtn.addEventListener("click", () => {
-      lastPaymentMethod = "Prex";
-      copyToClipboard(`Prex\nTitular: ${PREX_OWNER}\nNúmero: ${PREX_ACCOUNT}`).then(() => {
-        showPaymentMessage("Datos de Prex copiados.");
-      });
-    });
-  }
-
-  if (openPaypalBtn) {
-    openPaypalBtn.addEventListener("click", () => {
-      lastPaymentMethod = "PayPal";
-      window.open("https://www.paypal.com/paypalme/", "_blank", "noopener");
-      showPaymentMessage("PayPal abierto. Si no tenés enlace PayPal.Me, usá el email visible para enviar el pago.");
-    });
-  }
-
-  if (copyPaypalBtn) {
-    copyPaypalBtn.addEventListener("click", () => {
-      lastPaymentMethod = "PayPal";
-      copyToClipboard(PAYPAL_EMAIL).then(() => {
-        showPaymentMessage("Email de PayPal copiado.");
-      });
-    });
-  }
-
-  if (copyBtcBtn) {
-    copyBtcBtn.addEventListener("click", () => {
-      lastPaymentMethod = "Bitcoin / BlueWallet";
-      copyToClipboard(BTC_WALLET).then(() => {
-        showPaymentMessage("Dirección BTC copiada.");
-      });
-    });
-  }
-
-  if (toggleBtcBtn && btcWalletBox) {
-    toggleBtcBtn.addEventListener("click", () => {
-      const shouldShow = btcWalletBox.hidden;
-      btcWalletBox.hidden = !shouldShow;
-      toggleBtcBtn.setAttribute("aria-expanded", String(shouldShow));
-      toggleBtcBtn.textContent = shouldShow ? "Ocultar dirección" : "Ver dirección";
-    });
-  }
-
-  if (paymentDoneBtn) {
-    paymentDoneBtn.addEventListener("click", () => {
-      const url = buildPaymentConfirmationUrl();
-      if (!url) {
-        showPaymentMessage("WhatsApp no configurado todavía.");
-        return;
-      }
-      window.open(url, "_blank", "noopener");
-    });
-  }
+function showManualReviewMessage(message, type = "success") {
+  if (!manualReviewMessage) return;
+  manualReviewMessage.textContent = message;
+  manualReviewMessage.className = `form-message ${type}`;
 }
 
 function updateManualReviewLink() {
@@ -1318,14 +1304,7 @@ analyzeBtn.addEventListener("click", async () => {
 
   if (!input) {
     currentResult = null;
-    resultEl.className = "result-card panel is-empty";
-    resultEl.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon">IA</span>
-        <h2>Esperando análisis</h2>
-        <p>Pegá un mensaje, enlace o propuesta sospechosa para recibir una recomendación preventiva.</p>
-      </div>
-    `;
+    showSearchMode();
     updateManualReviewLink();
     return;
   }
@@ -1366,47 +1345,6 @@ caseForm.addEventListener("submit", handleCaseSubmit);
 adminBtn.addEventListener("click", openAdmin);
 exportCasesBtn.addEventListener("click", exportCases);
 
-if (showPaymentMethodsBtn) {
-  showPaymentMethodsBtn.addEventListener("click", () => {
-    const section = document.querySelector("#manual-review-section");
-    if (section) {
-      section.open = true;
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  });
-}
-
-if (sendPaymentProofBtn) {
-  sendPaymentProofBtn.addEventListener("click", () => {
-    const url = buildUnlockPaymentProofUrl();
-    if (!url) {
-      if (unlockMessage) {
-        unlockMessage.textContent = "WhatsApp no configurado todavía.";
-        unlockMessage.className = "form-message error";
-      }
-      return;
-    }
-    window.open(url, "_blank", "noopener");
-  });
-}
-
-if (showUnlockCodeBtn && unlockBox) {
-  showUnlockCodeBtn.addEventListener("click", () => {
-    unlockBox.hidden = !unlockBox.hidden;
-    if (!unlockBox.hidden && unlockCodeInput) unlockCodeInput.focus();
-  });
-}
-
-if (applyUnlockCodeBtn) {
-  applyUnlockCodeBtn.addEventListener("click", applyUnlockCode);
-}
-
-if (unlockCodeInput) {
-  unlockCodeInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") applyUnlockCode();
-  });
-}
-
 if (resetUsageBtn) {
   resetUsageBtn.addEventListener("click", () => {
     const confirmed = window.confirm("¿Seguro que querés reiniciar las verificaciones?");
@@ -1416,7 +1354,6 @@ if (resetUsageBtn) {
     const usage = createDefaultUsage();
     saveUsage(usage);
     updateUsageDisplay(usage);
-    if (limitCard) limitCard.hidden = true;
   });
 }
 
@@ -1442,10 +1379,7 @@ if (manualReviewLink) {
   manualReviewLink.addEventListener("click", (event) => {
     if (isWhatsAppConfigured()) return;
     event.preventDefault();
-    if (paymentMessage) {
-      paymentMessage.textContent = "WhatsApp no configurado todavía.";
-      paymentMessage.className = "form-message error";
-    }
+    showManualReviewMessage("WhatsApp no configurado todavía.", "error");
   });
 }
 
@@ -1459,7 +1393,6 @@ adminCasesList.addEventListener("click", (event) => {
 
 updateManualReviewLink();
 recoverFreeChecksIfNeeded();
-setupPaymentCenter();
 setupInstallPrompt();
 registerServiceWorker();
 loadSharedTextFromUrl();

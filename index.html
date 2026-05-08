@@ -53,6 +53,7 @@
     <main class="main-layout">
       <section class="scanner-card panel" aria-labelledby="scanner-title">
         <h2 id="scanner-title" class="sr-only">Analizador de riesgo</h2>
+        <div class="scanner-input-content" id="scanner-input-content">
 
         <label class="input-label" for="suspicious-input">Mensaje, enlace, wallet o propuesta</label>
         <div class="textarea-shell">
@@ -76,8 +77,7 @@
         <p class="main-helper">Pegá un mensaje, enlace o propuesta sospechosa y recibí una orientación preventiva.</p>
 
         <div class="usage-status" aria-live="polite">
-          <span>Verificaciones gratis: <strong id="free-checks-count">5</strong></span>
-          <span>Verificaciones desbloqueadas: <strong id="premium-checks-count">0</strong></span>
+          <span>Servicio gratuito: <strong id="free-checks-count">sin límite</strong></span>
         </div>
 
         <p class="short-legal">No ingreses claves, PIN, códigos SMS ni datos bancarios.</p>
@@ -89,6 +89,9 @@
           <button class="chip" type="button" data-demo="bank">Banco</button>
           <button class="chip" type="button" data-demo="normal">Normal</button>
         </div>
+        </div>
+
+        <div class="scanner-result" id="scanner-result" aria-live="assertive" hidden></div>
       </section>
 
       <section class="shared-card panel" id="shared-card" hidden>
@@ -99,31 +102,11 @@
         <button class="btn btn-primary" id="analyze-shared-btn" type="button">Analizar texto recibido</button>
       </section>
 
-      <section class="result-card panel is-empty" id="result" aria-live="polite">
+      <section class="result-card panel is-empty" id="result" aria-live="polite" hidden>
         <div class="empty-state">
           <span class="empty-icon">IA</span>
           <h2>Esperando análisis</h2>
           <p>El resultado aparecerá acá con categoría, puntaje y recomendación preventiva.</p>
-        </div>
-      </section>
-
-      <section class="limit-card panel" id="limit-card" hidden>
-        <div>
-          <h2>Te quedaste sin verificaciones gratuitas</h2>
-          <p>Podés esperar 24 horas o desbloquear más verificaciones.</p>
-        </div>
-        <div class="limit-actions">
-          <button class="btn btn-primary" id="show-payment-methods-btn" type="button">Desbloquear verificaciones</button>
-          <button class="btn btn-secondary" id="send-payment-proof-btn" type="button">Ya pagué, enviar comprobante</button>
-          <button class="btn btn-ghost" id="show-unlock-code-btn" type="button">Ingresar código de desbloqueo</button>
-        </div>
-        <div class="unlock-box" id="unlock-box" hidden>
-          <label class="input-label" for="unlock-code-input">Código de desbloqueo</label>
-          <div class="unlock-row">
-            <input id="unlock-code-input" type="text" autocomplete="off" placeholder="Ej: PREVENIA30">
-            <button class="btn btn-primary" id="apply-unlock-code-btn" type="button">Aplicar</button>
-          </div>
-          <p id="unlock-message" class="form-message" role="status"></p>
         </div>
       </section>
 
@@ -173,66 +156,16 @@
       </details>
 
       <details class="accordion panel" id="manual-review-section">
-        <summary><span class="summary-icon">$</span><span>Revisión manual</span></summary>
+        <summary><span class="summary-icon">?</span><span>Revisión manual</span></summary>
         <div class="accordion-content">
           <div class="cta-inline">
             <div>
               <h2>Revisión humana</h2>
-              <p>Si el caso es importante o vas a mover dinero, podés pedir una revisión manual.</p>
+              <p>Si el caso es importante o vas a mover dinero, podés pedir una revisión manual gratuita mientras Preven-IA crece.</p>
             </div>
-            <a class="btn btn-primary" id="manual-review-link" href="#" target="_blank" rel="noopener">Solicitar revisión</a>
+            <a class="btn btn-primary" id="manual-review-link" href="#" target="_blank" rel="noopener">Solicitar revisión gratis</a>
           </div>
-
-          <div class="payment-center" aria-labelledby="payment-title">
-            <div class="payment-head">
-              <h3 id="payment-title">Elegí una opción</h3>
-              <div class="price-row" aria-label="Precios de revisión">
-                <span>Revisión básica: <strong>$99 UYU</strong></span>
-                <span>Urgente: <strong>$199 UYU</strong></span>
-              </div>
-            </div>
-
-            <div class="payment-grid">
-              <article class="payment-card">
-                <div>
-                  <h3>Transferencia Prex</h3>
-                  <p>Titular: <strong>Matias Arballo</strong></p>
-                  <p>Número: <strong>33909</strong></p>
-                </div>
-                <button class="btn btn-secondary" id="copy-prex-btn" type="button">Copiar datos Prex</button>
-              </article>
-
-              <article class="payment-card">
-                <div>
-                  <h3>PayPal</h3>
-                  <p><strong>matiast3@gmail.com</strong></p>
-                </div>
-                <div class="payment-actions">
-                  <button class="btn btn-secondary" id="open-paypal-btn" type="button">Abrir PayPal</button>
-                  <button class="btn btn-ghost" id="copy-paypal-btn" type="button">Copiar email PayPal</button>
-                </div>
-              </article>
-
-              <article class="payment-card">
-                <div>
-                  <h3>Bitcoin / BlueWallet</h3>
-                  <p>Podés pagar con BTC si ya usás una wallet.</p>
-                </div>
-                <div class="payment-actions">
-                  <button class="btn btn-secondary" id="copy-btc-btn" type="button">Copiar dirección BTC</button>
-                  <button class="btn btn-ghost" id="toggle-btc-btn" type="button" aria-expanded="false">Ver dirección</button>
-                </div>
-                <div class="btc-wallet-box" id="btc-wallet-box" hidden>
-                  <code>bc1q3scj8nh5ta300slstnjxn903wdt5d48wr0qqt5</code>
-                  <div class="qr-placeholder">QR Bitcoin próximamente</div>
-                </div>
-              </article>
-            </div>
-
-            <p class="trust-note">Preven-IA no solicita claves, PIN, códigos SMS, CVV ni frases semilla.</p>
-            <button class="btn btn-primary payment-done-btn" id="payment-done-btn" type="button">Ya realicé el pago</button>
-            <p id="payment-message" class="form-message" role="status"></p>
-          </div>
+          <p id="manual-review-message" class="form-message" role="status"></p>
 
           <form id="case-form" class="case-form">
             <div class="form-grid">
