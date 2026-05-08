@@ -1,4 +1,4 @@
-const CACHE_NAME = "prevenia-cache-v20";
+const CACHE_NAME = "prevenia-cache-v22";
 
 const APP_ASSETS = [
   "./",
@@ -13,6 +13,9 @@ const APP_ASSETS = [
   "./icons/link-whatsapp.png",
   "./icons/link-compartir.png",
   "./assets/tutoriales/copiar-link.png",
+  "./assets/tutoriales/link-whatsapp-1.png",
+  "./assets/tutoriales/link-whatsapp-2.png",
+  "./assets/tutoriales/link-whatsapp-3.png",
   "./assets/tutoriales/compartir-prevenia.png"
 ];
 

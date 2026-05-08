@@ -31,7 +31,7 @@ const openWhatsappGuideBtn = document.querySelector("#open-whatsapp-guide-btn");
 const openShareGuideBtn = document.querySelector("#open-share-guide-btn");
 const whatsappGuideModal = document.querySelector("#whatsapp-guide-modal");
 const whatsappGuideTitle = document.querySelector("#whatsapp-guide-title");
-const guideImage = document.querySelector("#guide-image");
+const guideImageList = document.querySelector("#guide-image-list");
 const guideImageLink = document.querySelector("#guide-image-link");
 const guideImagePlaceholder = document.querySelector("#guide-image-placeholder");
 const guideHelpText = document.querySelector("#guide-help-text");
@@ -1230,15 +1230,45 @@ function updateManualReviewLink() {
   manualReviewLink.href = buildManualReviewUrl(currentResult);
 }
 
-function openGuideModal({ title, imageSrc, imageAlt, helpText }) {
+function renderGuideImages(images) {
+  if (!guideImageList) return;
+  guideImageList.innerHTML = "";
+
+  images.forEach((image, index) => {
+    const figure = document.createElement("figure");
+    figure.className = "guide-image-frame";
+
+    if (images.length > 1) {
+      const caption = document.createElement("figcaption");
+      caption.textContent = `Paso ${index + 1}`;
+      figure.appendChild(caption);
+    }
+
+    const img = document.createElement("img");
+    img.className = "guide-image";
+    img.src = image.src;
+    img.alt = image.alt;
+    img.loading = "lazy";
+    img.addEventListener("error", () => {
+      figure.remove();
+      if (!guideImageList.children.length && guideImagePlaceholder) {
+        guideImagePlaceholder.hidden = false;
+      }
+    });
+    img.addEventListener("load", () => {
+      if (guideImagePlaceholder) guideImagePlaceholder.hidden = true;
+    });
+
+    figure.appendChild(img);
+    guideImageList.appendChild(figure);
+  });
+}
+
+function openGuideModal({ title, images, helpText }) {
   if (!whatsappGuideModal) return;
   if (whatsappGuideTitle) whatsappGuideTitle.textContent = title;
-  if (guideImage) {
-    guideImage.hidden = false;
-    guideImage.src = imageSrc;
-    guideImage.alt = imageAlt;
-  }
-  if (guideImageLink) guideImageLink.href = imageSrc;
+  renderGuideImages(images);
+  if (guideImageLink && images.length) guideImageLink.href = images[0].src;
   if (guideImagePlaceholder) guideImagePlaceholder.hidden = true;
   if (guideHelpText) guideHelpText.textContent = helpText;
   whatsappGuideModal.hidden = false;
@@ -1249,8 +1279,20 @@ function openGuideModal({ title, imageSrc, imageAlt, helpText }) {
 function openWhatsappGuide() {
   openGuideModal({
     title: "Cómo copiar un link en WhatsApp",
-    imageSrc: "./assets/tutoriales/copiar-link.png",
-    imageAlt: "Guía visual para copiar un link en WhatsApp y pegarlo en Preven-IA",
+    images: [
+      {
+        src: "./assets/tutoriales/link-whatsapp-1.png",
+        alt: "Paso 1 para copiar un link en WhatsApp"
+      },
+      {
+        src: "./assets/tutoriales/link-whatsapp-2.png",
+        alt: "Paso 2 para copiar un link en WhatsApp"
+      },
+      {
+        src: "./assets/tutoriales/link-whatsapp-3.png",
+        alt: "Paso 3 para pegar el link en Preven-IA y analizarlo"
+      }
+    ],
     helpText: "Si no podés copiarlo, pedile ayuda a un familiar de confianza."
   });
 }
@@ -1258,8 +1300,12 @@ function openWhatsappGuide() {
 function openShareGuide() {
   openGuideModal({
     title: "Cómo compartir Preven-IA por WhatsApp",
-    imageSrc: "./assets/tutoriales/compartir-prevenia.png",
-    imageAlt: "Guía visual para compartir Preven-IA por WhatsApp",
+    images: [
+      {
+        src: "./assets/tutoriales/compartir-prevenia.png",
+        alt: "Guía visual para compartir Preven-IA por WhatsApp"
+      }
+    ],
     helpText: "Compartir Preven-IA puede ayudar a otra persona a revisar un mensaje antes de confiar."
   });
 }
@@ -1450,18 +1496,6 @@ if (closeWhatsappGuideBtn) {
 
 if (understoodWhatsappGuideBtn) {
   understoodWhatsappGuideBtn.addEventListener("click", closeWhatsappGuide);
-}
-
-if (guideImage) {
-  guideImage.addEventListener("error", () => {
-    guideImage.hidden = true;
-    if (guideImagePlaceholder) guideImagePlaceholder.hidden = false;
-  });
-
-  guideImage.addEventListener("load", () => {
-    guideImage.hidden = false;
-    if (guideImagePlaceholder) guideImagePlaceholder.hidden = true;
-  });
 }
 
 if (whatsappGuideModal) {
